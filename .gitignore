@@ -1,6 +1,9 @@
 .DS_Store
 .vscode/
 *.log
+.venv/
+*.egg-info/
+*.pyc
 
 # Python cache and bytecode artifacts
 __pycache__/
