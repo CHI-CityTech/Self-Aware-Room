@@ -13,6 +13,8 @@ The SAR documentation hierarchy is organized by discipline so each workstream ca
 5. Shared assets: [assets](assets)
 6. Historical drafts: [archive](archive)
 
+Experiment reports are maintained separately under the repository-level experiments/ track and must use experiment reference IDs (EYY.MM.DD#NN).
+
 ## 2. Core Repository-Level References
 
 These files provide cross-track context and should be reviewed before creating new track-specific specs.
@@ -29,3 +31,5 @@ This section defines lightweight rules for keeping the documentation hierarchy c
 2. Track-specific docs should be authored in their corresponding subfolder.
 3. Shared diagrams and images should live under docs/assets unless a track has a specific reason to localize assets.
 4. Superseded versions should be moved to docs/archive with clear version/date metadata.
+5. Experiment narratives and test reports should not be added under docs/ unless promoted into canonical policy/spec language; keep full reports under experiments/ and cross-reference by experiment ID.
+6. Canonical documents may cite experiment IDs as evidence, but canonical procedures and specifications should remain usable without requiring issue-thread context.
