@@ -9,9 +9,10 @@ The SAR documentation hierarchy is organized by discipline so each workstream ca
 1. Computational track: [computational/README.md](computational/README.md)
 2. Audio track: [audio/README.md](audio/README.md)
 3. Video track: [video/README.md](video/README.md)
-4. Structure track: [structure/README.md](structure/README.md)
-5. Shared assets: [assets](assets)
-6. Historical drafts: [archive](archive)
+4. Sensors track: [sensors/README.md](sensors/README.md)
+5. Structure track: [structure/README.md](structure/README.md)
+6. Shared assets: [assets](assets)
+7. Historical drafts: [archive](archive)
 
 Experiment reports are maintained separately under the repository-level experiments/ track and must use experiment reference IDs (EYY.MM.DD#NN).
 

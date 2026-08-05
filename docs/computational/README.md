@@ -29,6 +29,7 @@ Profile convention:
 | D03.01 | Component/Test Case | SAR Sensor Intake: Phase 1 Technical Implementation Specification | [Sensor Intake Phase 1 Spec](D03.01_SAR_Sensor_Intake_Document_Phase_1.md) | Phase 1 | Draft |
 | D04.01 | Tooling/Delivery | SAR Implementation Baseline: Libraries, Tooling, and Engineering Delivery | [Implementation Baseline and Tooling](D04.01_SAR_Implementation_Baseline_Libraries_and_Tooling.md) | 2026-07-18 | Draft for build planning |
 | D04.02 | Setup/Operations | SAR Computational Pipeline Setup Instructions | [Pipeline Setup Instructions](D04.02_SAR_Computational_Pipeline_Setup_Instructions_V1_2026-07-29.md) | V1 / 2026-07-29 | Draft |
+| D04.03 | Planning/Execution | SAR Computational Task, Dependency, Test, and Milestone Map | [Task, Dependency, Test, and Milestone Map](D04.03_SAR_Computational_Task_Dependency_Test_and_Milestone_Map_V1_2026-08-03.md) | V1 / 2026-08-03 | Draft |
 
 ## Streaming Profile Matrix (D01.02.xx)
 
@@ -46,9 +47,9 @@ This matrix reserves and tracks modality profiles that extend D01.02.
 
 - `D00.01`: [Oaa Self-aware Room - Design Specification 2026-04-27.pdf](../Oaa%20Self-aware%20Room%20%E2%80%93%20Design%20Specification%202026-04-27.pdf)
 
-## Deprecated (Pending Archive)
+## Deprecated (Archived)
 
-- D01.02 legacy combined profile: [Legacy Combined Audio Contract (to archive)](D01.02_SAR_Shared_Data_and_Interface_Contract_Audio_Streaming_Profile_V1_2026-07-28.md)
+- D01.02 legacy combined profile: [Legacy Combined Audio Contract (archived)](../archive/D01.02_SAR_Shared_Data_and_Interface_Contract_Audio_Streaming_Profile_V1_2026-07-28.md)
 
 ## Reference Convention
 
