@@ -1,0 +1,52 @@
+<h2 class="sr-only">Annotated TouchDesigner network showing OSC ingestion, asset lookup, switching, and projector output, with parameter expressions and file paths for each stage</h2>
+<div style="display:flex;flex-direction:column;gap:0">
+
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+<span style="font-size:15px;font-weight:500">OSC In CHOP + OSC In DAT</span>
+<span style="font-size:11px;color:var(--text-accent);background:var(--bg-accent);padding:2px 8px;border-radius:var(--radius)">ingestion</span>
+</div>
+<p style="font-size:13px;color:var(--text-secondary);margin:0 0 8px">Same OSC port, two parallel reads: CHOP gives a live numeric channel, DAT gives a logged table for debugging and string lookups.</p>
+<div style="font-family:var(--font-mono);font-size:12px;background:var(--surface-1);border-radius:var(--radius);padding:8px 10px">Network Port: 7000&#10;CHOP channel name: asset_index&#10;DAT columns: address · args · type · frame</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:6px 0"><i class="ti ti-arrow-down" style="font-size:18px;color:var(--text-muted)" aria-hidden="true"></i></div>
+
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+<span style="font-size:15px;font-weight:500">Select CHOP / Select DAT</span>
+<span style="font-size:11px;color:var(--text-accent);background:var(--bg-accent);padding:2px 8px;border-radius:var(--radius)">resolve</span>
+</div>
+<p style="font-size:13px;color:var(--text-secondary);margin:0 0 8px">Isolates the target channel or row. For string tags, cross-references against the Folder DAT below to resolve a row index or file path.</p>
+<div style="font-family:var(--font-mono);font-size:12px;background:var(--surface-1);border-radius:var(--radius);padding:8px 10px">Numeric: op('oscin1')['asset_index']&#10;String: op('select_dat1')[0,'path']</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:6px 0"><i class="ti ti-arrow-down" style="font-size:18px;color:var(--text-muted)" aria-hidden="true"></i></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem">
+<div style="font-size:14px;font-weight:500;margin-bottom:4px">Switch TOP</div>
+<span style="font-size:11px;color:var(--text-accent);background:var(--bg-accent);padding:2px 8px;border-radius:var(--radius)">select</span>
+<p style="font-size:13px;color:var(--text-secondary);margin:8px 0">Index-driven, cuts between pre-loaded inputs with no decode cost.</p>
+<div style="font-family:var(--font-mono);font-size:12px;background:var(--surface-1);border-radius:var(--radius);padding:8px 10px">index = op('select1')&#91;'asset_index'&#93;</div>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem">
+<div style="font-size:14px;font-weight:500;margin-bottom:4px">Movie File In bank</div>
+<span style="font-size:11px;color:var(--text-accent);background:var(--bg-accent);padding:2px 8px;border-radius:var(--radius)">assets</span>
+<p style="font-size:13px;color:var(--text-secondary);margin:8px 0">One TOP per asset, all resident in memory, feeding the Switch TOP.</p>
+<div style="font-family:var(--font-mono);font-size:12px;background:var(--surface-1);border-radius:var(--radius);padding:8px 10px">file = C:/assets/lib/scene_02.mov</div>
+</div>
+</div>
+
+<div style="display:flex;justify-content:center;padding:6px 0"><i class="ti ti-arrow-down" style="font-size:18px;color:var(--text-muted)" aria-hidden="true"></i></div>
+
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+<span style="font-size:15px;font-weight:500">Window COMP</span>
+<span style="font-size:11px;color:var(--text-accent);background:var(--bg-accent);padding:2px 8px;border-radius:var(--radius)">output</span>
+</div>
+<p style="font-size:13px;color:var(--text-secondary);margin:0 0 8px">Fullscreen borderless on the projector display, Perform Mode on to keep the render thread priority.</p>
+<div style="font-family:var(--font-mono);font-size:12px;background:var(--surface-1);border-radius:var(--radius);padding:8px 10px">Monitor: 2 · Fullscreen: On · Perform Mode: On</div>
+</div>
+
+</div>
