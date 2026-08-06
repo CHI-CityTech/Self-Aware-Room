@@ -2,6 +2,10 @@
 
 This index defines sortable document identifiers for the computational specification set.
 
+## Pipeline Diagram (Current)
+
+![SAR General Computational Pipeline architecture and tier mapping (v1.1)](../assets/SAR_General_Computational_Pipeline_v1.1.png)
+
 ## Numbering Scheme
 
 - `D00.xx`: Baseline and governance

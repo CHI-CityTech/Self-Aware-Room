@@ -59,6 +59,7 @@ The documentation set is organized as a multi-track hierarchy.
 ### Associated Projects
 
 - [CHI-StudentResearch](https://github.com/CHI-CityTech/CHI-StudentResearch): Summer 2026 operations, student intake, launch planning, and active cohort coordination.
+- [Documentary](https://github.com/CHI-CityTech/Documentary): documentary planning and media-production materials that connect to SAR narrative, video, and archival workflows.
 - [Bio-Aware Blended Space (BABS)](https://github.com/CHI-CityTech/BABS): bio-aware blended-spaces work treated as a SAR subset/component where relevant.
 - [Unity-BSP](https://github.com/CHI-CityTech/Unity-BSP): digital twin and virtual-physical mapping work connected to SAR room-state modeling.
 - [AVMI-GVSC-SoundSystem](https://github.com/CHI-CityTech/AVMI-GVSC-SoundSystem): related audio-routing and room-system infrastructure work where sound deployment overlaps with SAR implementation.
