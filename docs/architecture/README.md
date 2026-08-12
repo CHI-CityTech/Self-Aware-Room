@@ -1,4 +1,6 @@
-# Self Aware Room Architecture Overview (Stub)
+# Self Aware Room Architecture 
+This folder stores architectural and configuration information for the overall SAR architecture.  More specific architectural documents are stored within their respective folders.
+
 
 ## Core Layers
 
@@ -15,4 +17,6 @@
 
 ## Notes
 
-This document remains a short orientation stub. The primary generalized architecture is now documented in `SAR_General_Computational_Pipeline_Spec_V1_2026-07-18.md`.
+This document remains a short orientation stub. 
+The primary computational architecture is now documented in docs/computational/ folder as    
+D01.01_SAR_General_Computational_Pipeline_Spec
