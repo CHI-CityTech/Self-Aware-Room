@@ -93,3 +93,8 @@ The documentation set is organized as a multi-track hierarchy.
 1. Confirm canonical SAR workstreams and owners.
 2. Add the first systems map and integration conventions.
 3. Migrate or reference active Summer 2026 materials from CHI-StudentResearch where appropriate.
+
+## Reading
+
+[System Architecture: Self-Aware Room](https://academicworks.cuny.edu/ny_pubs/1394/)  
+[The Self-Aware Room: A Framework for Operational Self-Awareness in Evolvable Blended Environments](https://academicworks.cuny.edu/ny_pubs/1398/)  
