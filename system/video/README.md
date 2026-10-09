@@ -2,6 +2,8 @@
 
 This folder contains Video-team implementation artifacts and team-held test records. Test reports here are evidence of work performed; they are not approved canonical contracts or procedures. Summer 2026 materials are grouped in [2026 Summer](2026%20Summer/README.md).
 
+The generic `SAR_Test0x_Report.md` originals are retained in [archive](archive/README.md); the current, indexed versions are the V02 reports below.
+
 ## Test Records
 
 The October 8, 2026 reports form the V02 QLab-TD integration series. The records remain with the Video team in this folder; V-series IDs identify the responsible team's series, while result domains and collaborators are recorded separately.
