@@ -1,0 +1,9 @@
+check_id,audio_checklist_item,assessment,reason,evidence
+AC-01,Base D01.02 fields,Partly demonstrated,A complete fixture traverses acquisition. Presence/shape alone do not establish semantic conformance.,"P01, P03, P13"
+AC-02,Audio required fields,Gap,Missing sample_format and bit_depth are accepted.,P02
+AC-03,Encoding / sample format / bit depth,Gap,No precision or conflicting-declaration validation demonstrated.,"P02, P07"
+AC-04,Shared ingest time and identity,Partial,"Positive timestamps/native/object lineage, but fallback scope and generated origins need work.","P01, P08, P09, P10"
+AC-05,Raw retention and traceable references,Partial / policy modes unassessed,Reference digest and size verified. Retention/deletion modes not certified.,P04; modes not executed
+AC-06,Room-tone discard if enabled,Not assessed,No ring buffer or signal-level gating experiment. Tentative thresholds are not acceptance limits.,Not executed
+AC-07,Gating/segmentation metadata if enabled,Conditional enforcement gap,Incomplete metadata passes under the driver enabled-gating assumption. No runtime gating feature was activated.,"P04, P05"
+AC-08,Segment/frame provenance if segments produced,Not assessed,No multi-frame segment fixture or ASR workflow. Generic parent links are insufficient proof.,Not executed

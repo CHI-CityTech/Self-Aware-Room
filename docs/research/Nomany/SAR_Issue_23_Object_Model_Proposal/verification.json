@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "inspection": {
+    "data_object_fields": 8,
+    "concrete_subtypes": [
+      "Observation",
+      "Event",
+      "Entity",
+      "State",
+      "SemanticState",
+      "Decision",
+      "Intent",
+      "ExecutionPlan",
+      "Dispatch",
+      "EvaluationRecord"
+    ],
+    "field_inventory_rows": 65,
+    "source_line_checks": 65,
+    "local_proposal_targets": 21,
+    "class_diagrams_rendered": 5
+  },
+  "isolated_design_checks": [
+    "OBJ-01: proposed abstract base cannot be constructed",
+    "OBJ-02: incomplete direct child cannot be constructed",
+    "OBJ-03: all ten concrete categories construct with correct tags",
+    "OBJ-04: independent default metadata and payload instances",
+    "OBJ-05: Event observation and parent lists deduplicate consistently",
+    "OBJ-06: stages/observer are separate from data artifacts",
+    "Published Python sketch executes and constructs its concrete Observation",
+    "Baseline manual guard permits an incomplete subclass, confirming the formal-ABC gap"
+  ],
+  "design_cases_not_executed": [
+    "OBJ-07",
+    "OBJ-08",
+    "OBJ-09",
+    "OBJ-10",
+    "OBJ-11",
+    "OBJ-12",
+    "OBJ-13",
+    "OBJ-14",
+    "OBJ-15",
+    "OBJ-16",
+    "OBJ-17",
+    "OBJ-18"
+  ],
+  "limits": [
+    "Candidate ABC changes executed only in an isolated in-memory module. No production code changed.",
+    "No full pipeline, mypy/interface conformance, schema migration, hardware, or profile-validator tests were run.",
+    "Remaining acceptance cases require reviewed implementation and integration evidence."
+  ],
+  "local_commit": "4f714beb6244679511ae22d562f03339dc422886",
+  "changed_paths": [
+    "docs/assets/issue23/01_shared_contract.dot",
+    "docs/assets/issue23/01_shared_contract.svg",
+    "docs/assets/issue23/02_evidence_objects.dot",
+    "docs/assets/issue23/02_evidence_objects.svg",
+    "docs/assets/issue23/03_response_objects.dot",
+    "docs/assets/issue23/03_response_objects.svg",
+    "docs/assets/issue23/04_processing_interfaces.dot",
+    "docs/assets/issue23/04_processing_interfaces.svg",
+    "docs/assets/issue23/05_modality_composition.dot",
+    "docs/assets/issue23/05_modality_composition.svg",
+    "docs/assets/issue23/field_inventory.csv",
+    "docs/computational/D02.01_SAR_Computational_Class_and_Object_Model_V1_2026-07-27.md",
+    "docs/computational/README.md",
+    "docs/computational/proposals/issue-23/SAR_Object_Abstraction_and_Interface_Proposal_V1_2026-10-28.md"
+  ],
+  "runtime_source_changed": false,
+  "staged_whitespace_check": "passed before commit",
+  "diagram_visual_review": "all five rendered diagrams inspected",
+  "standalone_report": {
+    "embedded_diagrams": 5,
+    "embedded_field_inventory_rows": 65,
+    "external_scripts_or_images": 0,
+    "relative_links": 0
+  },
+  "patch_recreates_committed_tree": true
+}

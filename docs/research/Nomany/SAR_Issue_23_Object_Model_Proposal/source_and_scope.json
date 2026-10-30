@@ -1,0 +1,30 @@
+{
+  "issue_url": "https://github.com/CHI-CityTech/Self-Aware-Room/issues/23",
+  "checked_date": "2026-10-28",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "local_commit": "4f714beb6244679511ae22d562f03339dc422886",
+  "local_branch": "tamim/issue-23-object-abstraction",
+  "remote_changes_made": false,
+  "push_access": false,
+  "research_sources": [
+    "https://docs.python.org/3.12/library/abc.html",
+    "https://typing.python.org/en/latest/spec/protocol.html",
+    "https://www.omg.org/spec/UML/2.5.1/About-UML"
+  ],
+  "file_sha256": {
+    "docs/assets/issue23/01_shared_contract.dot": "2e457d6fcd7d7e2155ee561bc48bedd21b7bd243da6ad3159cdd19a993ff75ce",
+    "docs/assets/issue23/01_shared_contract.svg": "ed7994d5271ce21e352d4927ce4350bc3532ce748ff1324315769b083a293194",
+    "docs/assets/issue23/02_evidence_objects.dot": "1fc2ee704a6fa2fbe9a602e1c2157fb10c472a62410b6b4cec4ea54f4f7cc312",
+    "docs/assets/issue23/02_evidence_objects.svg": "e2246215de688aef0d70ee259a0467bd3da36dbb9b7f78bed10feb42d5f4bcad",
+    "docs/assets/issue23/03_response_objects.dot": "af931c97f561bf6f892a784f37ff89a9982e1c6b97aaaded9c25b1ac5eb865c2",
+    "docs/assets/issue23/03_response_objects.svg": "cf212250acb883fc8ac106e3451e1eb796bb6a3ad529d89d230fe11b14932005",
+    "docs/assets/issue23/04_processing_interfaces.dot": "2f499a5c37313385c176489d28c84048f4256a4bd9b70099aac7bf880c4aa4f7",
+    "docs/assets/issue23/04_processing_interfaces.svg": "60707b77050f750b414b40d8eea9287cd30d77c388e0b66ed5d134eb1b9a5086",
+    "docs/assets/issue23/05_modality_composition.dot": "cd85c65c62b5b1acfc886a9dcbd2264f8e67c49c51f984c232ecb04ab1737886",
+    "docs/assets/issue23/05_modality_composition.svg": "00af2dae4af67083cfd8c63a2b3717581fe6ddb7b43afbf8be731cc0c8ca3f47",
+    "docs/assets/issue23/field_inventory.csv": "9ab419c11dc916137f6fd05b4d4117386536fa7ef2ad8c441ed56468425c3310",
+    "docs/computational/D02.01_SAR_Computational_Class_and_Object_Model_V1_2026-07-27.md": "84d656ea17979e523c9ef96598a92f0e76bcbbb780dde7cd69d66447d554a855",
+    "docs/computational/README.md": "4e639b2bdf000173da0118958d2407d406e1c42886c0e219dc38bed85796321e",
+    "docs/computational/proposals/issue-23/SAR_Object_Abstraction_and_Interface_Proposal_V1_2026-10-28.md": "a37ec441fadfd81e4f95a3e7798231fe005a3f42d3d5359818b01e074959f5b0"
+  }
+}

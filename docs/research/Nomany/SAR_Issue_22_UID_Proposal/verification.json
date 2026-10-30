@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "files_reviewed": [
+    "docs/sensors/SAR_Sensor_UID_Definition_Set_Proposal_V1_2026-10-28.md",
+    "docs/sensors/README.md",
+    "docs/sensors/SAR_Sensor_Inventory_and_Computational_Mapping_V1_2026-08-03.md"
+  ],
+  "existing_local_markdown_targets": 18,
+  "json_examples_parsed": 2,
+  "uuid_values_checked": 8,
+  "distinct_frame_keys": 3,
+  "acceptance_cases_documented": 18,
+  "word_count": 3544,
+  "checks": [
+    "Local Markdown targets exist",
+    "Markdown table columns consistent",
+    "JSON examples parse",
+    "Example UUID suffixes have valid v4/RFC variant and canonical formatting",
+    "Fictional example does not claim verified inventory",
+    "Stream and restart examples have distinct frame keys",
+    "18 design acceptance cases present",
+    "git diff --cached --check passed for all three files before commit",
+    "Packaged patch applies to baseline and recreates the committed tree exactly"
+  ],
+  "limits": [
+    "Documentation checks only. No runtime UID system implemented or tested.",
+    "External research pages retrieved separately. Inventory sheet and hardware not verified."
+  ],
+  "local_commit": "bc77c37419eaa19d8bcf3fdab4db8e7d4b11e1b1",
+  "patch_recreates_commit_tree": true,
+  "changed_paths": [
+    "docs/sensors/README.md",
+    "docs/sensors/SAR_Sensor_Inventory_and_Computational_Mapping_V1_2026-08-03.md",
+    "docs/sensors/SAR_Sensor_UID_Definition_Set_Proposal_V1_2026-10-28.md"
+  ]
+}

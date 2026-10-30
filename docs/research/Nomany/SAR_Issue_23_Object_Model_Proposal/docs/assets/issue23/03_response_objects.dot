@@ -1,0 +1,17 @@
+digraph SAR {
+graph [rankdir=TB, bgcolor="white", pad="0.25", nodesep="0.28", ranksep="0.65", fontname="Helvetica", fontsize=18, labelloc=t, label="03 Response and evaluation objects | existing shallow hierarchy"];
+node [shape=plain, fontname="Helvetica", fontsize=11];
+edge [fontname="Helvetica", fontsize=10, color="#334155", arrowsize=0.8];
+"DataObject" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;abstract, see diagram 01&gt;&gt;<BR/>DataObject</B></TD></TR><TR><TD ALIGN="LEFT">+ common identity, payload, metadata<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Decision" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>Decision</B></TD></TR><TR><TD ALIGN="LEFT">+ policy_result: str or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Intent" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>Intent</B></TD></TR><TR><TD ALIGN="LEFT">+ intent_name: str or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"ExecutionPlan" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>ExecutionPlan</B></TD></TR><TR><TD ALIGN="LEFT">+ steps: list[dict[str, Any]]<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Dispatch" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>Dispatch</B></TD></TR><TR><TD ALIGN="LEFT">+ channel: str or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"EvaluationRecord" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>EvaluationRecord</B></TD></TR><TR><TD ALIGN="LEFT">+ metric_name: str or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+Decision -> DataObject [arrowhead=empty];
+Intent -> DataObject [arrowhead=empty];
+ExecutionPlan -> DataObject [arrowhead=empty];
+Dispatch -> DataObject [arrowhead=empty];
+EvaluationRecord -> DataObject [arrowhead=empty];
+
+}

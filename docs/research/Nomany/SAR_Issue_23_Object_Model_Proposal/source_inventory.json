@@ -1,0 +1,622 @@
+{
+  "ObjectType": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 18,
+    "bases": [
+      "str",
+      "Enum"
+    ],
+    "fields": [],
+    "methods": []
+  },
+  "DataObject": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 38,
+    "bases": [],
+    "fields": [
+      [
+        "object_type",
+        "ObjectType",
+        48
+      ],
+      [
+        "object_id",
+        "str",
+        49
+      ],
+      [
+        "trace_id",
+        "str | None",
+        50
+      ],
+      [
+        "quality_status",
+        "str | None",
+        51
+      ],
+      [
+        "error_status",
+        "str | None",
+        52
+      ],
+      [
+        "payload",
+        "dict[str, Any]",
+        53
+      ],
+      [
+        "provenance",
+        "Provenance",
+        54
+      ],
+      [
+        "time_context",
+        "TimeContext",
+        55
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "Observation": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 64,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "source_id",
+        "str",
+        70
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "Event": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 78,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "event_type",
+        "str | None",
+        94
+      ],
+      [
+        "room_entity_id",
+        "str | None",
+        95
+      ],
+      [
+        "observation_ids",
+        "list[str]",
+        96
+      ]
+    ],
+    "methods": [
+      "__post_init__",
+      "add_observation_id",
+      "add_observation_ids"
+    ]
+  },
+  "Entity": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 121,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "entity_type",
+        "str | None",
+        127
+      ],
+      [
+        "room_entity_id",
+        "str | None",
+        128
+      ],
+      [
+        "is_canonical_room",
+        "bool",
+        129
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "State": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 137,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "state_scope",
+        "str | None",
+        140
+      ],
+      [
+        "room_entity_id",
+        "str | None",
+        141
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "SemanticState": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 149,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "semantic_label",
+        "str | None",
+        152
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "Decision": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 160,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "policy_result",
+        "str | None",
+        163
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "Intent": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 171,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "intent_name",
+        "str | None",
+        174
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "ExecutionPlan": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 182,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "steps",
+        "list[dict[str, Any]]",
+        185
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "Dispatch": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 193,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "channel",
+        "str | None",
+        196
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "EvaluationRecord": {
+    "module": "src/sar_core/contracts/models.py",
+    "line": 204,
+    "bases": [
+      "DataObject"
+    ],
+    "fields": [
+      [
+        "metric_name",
+        "str | None",
+        207
+      ]
+    ],
+    "methods": [
+      "__post_init__"
+    ]
+  },
+  "Provenance": {
+    "module": "src/sar_core/contracts/identity.py",
+    "line": 25,
+    "bases": [],
+    "fields": [
+      [
+        "parent_object_ids",
+        "list[str]",
+        28
+      ],
+      [
+        "source_native_id",
+        "str | None",
+        29
+      ],
+      [
+        "created_by_component",
+        "str | None",
+        30
+      ],
+      [
+        "component_version",
+        "str | None",
+        31
+      ],
+      [
+        "configuration_version",
+        "str | None",
+        32
+      ]
+    ],
+    "methods": []
+  },
+  "TimeContext": {
+    "module": "src/sar_core/contracts/timing.py",
+    "line": 10,
+    "bases": [],
+    "fields": [
+      [
+        "source_capture_time",
+        "datetime | None",
+        13
+      ],
+      [
+        "receipt_time",
+        "datetime | None",
+        14
+      ],
+      [
+        "processing_time",
+        "datetime | None",
+        15
+      ],
+      [
+        "valid_from",
+        "datetime | None",
+        16
+      ],
+      [
+        "valid_until",
+        "datetime | None",
+        17
+      ],
+      [
+        "dispatch_time",
+        "datetime | None",
+        18
+      ],
+      [
+        "completion_time",
+        "datetime | None",
+        19
+      ],
+      [
+        "clock_offset_estimate",
+        "float | None",
+        20
+      ],
+      [
+        "clock_quality",
+        "str | None",
+        21
+      ],
+      [
+        "sync_source",
+        "str | None",
+        22
+      ]
+    ],
+    "methods": []
+  },
+  "StageStatus": {
+    "module": "src/sar_core/contracts/stages.py",
+    "line": 13,
+    "bases": [
+      "str",
+      "Enum"
+    ],
+    "fields": [],
+    "methods": []
+  },
+  "StageResult": {
+    "module": "src/sar_core/contracts/stages.py",
+    "line": 21,
+    "bases": [],
+    "fields": [
+      [
+        "output_objects",
+        "list[DataObject]",
+        24
+      ],
+      [
+        "status",
+        "StageStatus",
+        25
+      ],
+      [
+        "messages",
+        "list[str]",
+        26
+      ]
+    ],
+    "methods": []
+  },
+  "TelemetryEmitter": {
+    "module": "src/sar_core/contracts/stages.py",
+    "line": 29,
+    "bases": [
+      "Protocol"
+    ],
+    "fields": [],
+    "methods": [
+      "emit_status",
+      "emit_trace"
+    ]
+  },
+  "StageComponent": {
+    "module": "src/sar_core/contracts/stages.py",
+    "line": 39,
+    "bases": [
+      "ABC"
+    ],
+    "fields": [
+      [
+        "stage_name",
+        "str",
+        42
+      ],
+      [
+        "telemetry",
+        "TelemetryEmitter | None",
+        43
+      ]
+    ],
+    "methods": [
+      "__init__",
+      "_emit_received",
+      "_emit_transformed",
+      "_emit_sent",
+      "_emit_error",
+      "_emit_indeterminate",
+      "accept_input",
+      "process"
+    ]
+  },
+  "EdgeObservationFrame": {
+    "module": "src/sar_core/contracts/edge_ingress.py",
+    "line": 15,
+    "bases": [],
+    "fields": [
+      [
+        "source_node_id",
+        "str",
+        22
+      ],
+      [
+        "source_id",
+        "str",
+        23
+      ],
+      [
+        "modality",
+        "str",
+        24
+      ],
+      [
+        "encoding",
+        "str",
+        25
+      ],
+      [
+        "sample_rate_hz",
+        "int",
+        26
+      ],
+      [
+        "channel_count",
+        "int",
+        27
+      ],
+      [
+        "frame_index",
+        "int",
+        28
+      ],
+      [
+        "payload",
+        "dict[str, Any]",
+        29
+      ],
+      [
+        "source_capture_time",
+        "datetime | None",
+        30
+      ],
+      [
+        "source_frame_id",
+        "str | None",
+        31
+      ],
+      [
+        "source_latency_ms",
+        "float | None",
+        32
+      ]
+    ],
+    "methods": []
+  },
+  "LogLevel": {
+    "module": "src/sar_core/contracts/observability.py",
+    "line": 13,
+    "bases": [
+      "str",
+      "Enum"
+    ],
+    "fields": [],
+    "methods": []
+  },
+  "LogRecord": {
+    "module": "src/sar_core/contracts/observability.py",
+    "line": 23,
+    "bases": [],
+    "fields": [
+      [
+        "stage_name",
+        "str",
+        26
+      ],
+      [
+        "record_type",
+        "str",
+        27
+      ],
+      [
+        "message",
+        "str",
+        28
+      ],
+      [
+        "level",
+        "LogLevel",
+        29
+      ],
+      [
+        "timestamp_utc",
+        "datetime",
+        30
+      ],
+      [
+        "trace_id",
+        "str | None",
+        31
+      ],
+      [
+        "payload",
+        "dict[str, Any]",
+        32
+      ]
+    ],
+    "methods": []
+  },
+  "RawReference": {
+    "module": "src/sar_core/storage/raw_store.py",
+    "line": 16,
+    "bases": [],
+    "fields": [
+      [
+        "raw_ref_uri",
+        "str",
+        19
+      ],
+      [
+        "checksum_sha256",
+        "str",
+        20
+      ],
+      [
+        "media_type",
+        "str",
+        21
+      ],
+      [
+        "byte_size",
+        "int",
+        22
+      ]
+    ],
+    "methods": [
+      "as_payload"
+    ]
+  },
+  "RawStore": {
+    "module": "src/sar_core/storage/raw_store.py",
+    "line": 34,
+    "bases": [
+      "Protocol"
+    ],
+    "fields": [],
+    "methods": [
+      "store_payload"
+    ]
+  },
+  "LocalFileRawStore": {
+    "module": "src/sar_core/storage/raw_store.py",
+    "line": 41,
+    "bases": [],
+    "fields": [],
+    "methods": [
+      "__init__",
+      "store_payload"
+    ]
+  },
+  "LogSink": {
+    "module": "src/sar_core/observability_sinks.py",
+    "line": 14,
+    "bases": [
+      "Protocol"
+    ],
+    "fields": [],
+    "methods": [
+      "emit"
+    ]
+  },
+  "ConsoleLogSink": {
+    "module": "src/sar_core/observability_sinks.py",
+    "line": 47,
+    "bases": [],
+    "fields": [],
+    "methods": [
+      "__init__",
+      "emit"
+    ]
+  },
+  "JsonlFileLogSink": {
+    "module": "src/sar_core/observability_sinks.py",
+    "line": 63,
+    "bases": [],
+    "fields": [],
+    "methods": [
+      "__init__",
+      "emit"
+    ]
+  }
+}

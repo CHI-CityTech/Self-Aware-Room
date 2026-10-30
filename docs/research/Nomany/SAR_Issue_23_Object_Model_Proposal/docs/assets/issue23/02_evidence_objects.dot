@@ -1,0 +1,17 @@
+digraph SAR {
+graph [rankdir=TB, bgcolor="white", pad="0.25", nodesep="0.28", ranksep="0.65", fontname="Helvetica", fontsize=18, labelloc=t, label="02 Evidence and interpretation objects | existing shallow hierarchy"];
+node [shape=plain, fontname="Helvetica", fontsize=11];
+edge [fontname="Helvetica", fontsize=10, color="#334155", arrowsize=0.8];
+"DataObject" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;abstract, see diagram 01&gt;&gt;<BR/>DataObject</B></TD></TR><TR><TD ALIGN="LEFT">+ common identity, payload, metadata<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Observation" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>Observation</B></TD></TR><TR><TD ALIGN="LEFT">+ source_id: str<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Event" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>Event</B></TD></TR><TR><TD ALIGN="LEFT">+ event_type: str or None<BR ALIGN="LEFT"/>+ room_entity_id: str or None<BR ALIGN="LEFT"/>+ observation_ids: list[str]<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/>+ add_observation_id(id): None<BR ALIGN="LEFT"/>+ add_observation_ids(ids): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Entity" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>Entity</B></TD></TR><TR><TD ALIGN="LEFT">+ entity_type: str or None<BR ALIGN="LEFT"/>+ room_entity_id: str or None<BR ALIGN="LEFT"/>+ is_canonical_room: bool<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"State" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>State</B></TD></TR><TR><TD ALIGN="LEFT">+ state_scope: str or None<BR ALIGN="LEFT"/>+ room_entity_id: str or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"SemanticState" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing subtype&gt;&gt;<BR/>SemanticState</B></TD></TR><TR><TD ALIGN="LEFT">+ semantic_label: str or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ __post_init__(): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+Observation -> DataObject [arrowhead=empty];
+Event -> DataObject [arrowhead=empty];
+Entity -> DataObject [arrowhead=empty];
+State -> DataObject [arrowhead=empty];
+SemanticState -> DataObject [arrowhead=empty];
+
+}

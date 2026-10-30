@@ -1,0 +1,210 @@
+{
+  "assessment_date_local": "2026-10-28",
+  "executed_at_utc": "2026-10-29T01:02:31.928823+00:00",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "probe_count": 13,
+  "probes": [
+    {
+      "probe_id": "P01",
+      "name": "Complete inline audio follows structural acquisition path",
+      "observed": {
+        "stage_status": "ok",
+        "all_common_fields_present": true,
+        "precision_metadata_preserved": true,
+        "new_object_id": true,
+        "parent_link_preserved": true,
+        "receipt_and_processing_stamped": true
+      },
+      "interpretation": "Positive structural evidence only. Does not establish full audio conformance.",
+      "context": {}
+    },
+    {
+      "probe_id": "P02",
+      "name": "Missing required audio precision information accepted",
+      "observed": {
+        "stage_status": "ok",
+        "sample_format_present": false,
+        "bit_depth_present": false
+      },
+      "interpretation": "L1 does not enforce the explicit sample_format-or-bit_depth requirement in D01.02.01 section 4.",
+      "context": {}
+    },
+    {
+      "probe_id": "P03",
+      "name": "Five-field non-audio envelope cannot be constructed",
+      "observed": {
+        "constructed": false,
+        "error": "EdgeObservationFrame.__init__() missing 3 required positional arguments: 'encoding', 'sample_rate_hz', and 'channel_count'"
+      },
+      "interpretation": "The current transport constructor forces audio-related fields onto the generalized envelope. This is not a full environmental-profile test.",
+      "context": {}
+    },
+    {
+      "probe_id": "P04",
+      "name": "Reference-storage path removes direct precision and gating metadata",
+      "observed": {
+        "stage_status": "ok",
+        "metadata_absent_from_emitted_payload": [
+          "bit_depth",
+          "capture_policy",
+          "dropped_by_policy",
+          "gate_state",
+          "post_roll_ms",
+          "pre_roll_ms",
+          "sample_format",
+          "threshold_off_dbfs",
+          "threshold_on_dbfs"
+        ],
+        "metadata_still_in_stored_artifact": true,
+        "checksum_verified": true,
+        "byte_size_verified": true,
+        "stored_fixture": "synthetic_storage/20261029T010231.927888Z_synthetic-mic-a_40fcaf08-ba22-42b1-a8c1-f0d8242f8f21.json",
+        "checksum_sha256": "8cc74652c0c574f49b6b2dff4b78043130d54cfe5a15d85f6c2f1d90adccfc9b",
+        "emitted_payload_keys": [
+          "byte_size",
+          "channel_count",
+          "checksum_sha256",
+          "encoding",
+          "frame_index",
+          "ingest_node_id",
+          "media_type",
+          "modality",
+          "raw_ref_uri",
+          "sample_rate_hz",
+          "source_node_id"
+        ]
+      },
+      "interpretation": "Metadata is not destroyed, but downstream consumers must resolve storage to recover it. The contract needs an explicit direct-metadata/reference-resolution rule.",
+      "context": {
+        "gating_policy_assumption": "enabled for this fixture; no runtime gating configuration is implemented by this probe"
+      }
+    },
+    {
+      "probe_id": "P05",
+      "name": "Incomplete gating metadata accepted under enabled-gating interpretation",
+      "observed": {
+        "stage_status": "ok",
+        "missing_conditional_fields": [
+          "dropped_by_policy",
+          "post_roll_ms",
+          "pre_roll_ms",
+          "threshold_off_dbfs",
+          "threshold_on_dbfs"
+        ]
+      },
+      "interpretation": "No conditional profile validation is performed. The driver assumes enabled gating. It does not claim to have enabled an implemented runtime gating feature.",
+      "context": {
+        "gating_enabled_in_review_context": true
+      }
+    },
+    {
+      "probe_id": "P06",
+      "name": "Descending frame indices accepted for one source in one fixture sequence",
+      "observed": {
+        "stage_status": "ok",
+        "emitted_indices": [
+          2,
+          1
+        ]
+      },
+      "interpretation": "This acquisition path does not enforce monotonic ordering. Stream/session/reset semantics still need an agreed validator boundary.",
+      "context": {
+        "same_source_session_assumed": true
+      }
+    },
+    {
+      "probe_id": "P07",
+      "name": "Payload entries override conflicting outer frame metadata",
+      "observed": {
+        "outer_encoding": "pcm16",
+        "emitted_encoding": "opus",
+        "outer_modality": "audio",
+        "emitted_modality": "video",
+        "emitted_source_node_id": "payload-shadow",
+        "stage_status": "ok"
+      },
+      "interpretation": "The adapter merge has precedence behavior that the written contract does not specify. Recommend rejecting conflicting declarations.",
+      "context": {}
+    },
+    {
+      "probe_id": "P08",
+      "name": "Native identity and canonical object identity remain separate",
+      "observed": {
+        "native_id_preserved": true,
+        "new_derived_object_id": true,
+        "parent_link_preserved": true
+      },
+      "interpretation": "Positive identity/lineage evidence on this path.",
+      "context": {}
+    },
+    {
+      "probe_id": "P09",
+      "name": "Generated fallback frame labels collide across two streams",
+      "observed": {
+        "generated_native_values": [
+          "synthetic-node:0",
+          "synthetic-node:0"
+        ],
+        "canonical_object_ids_distinct": true
+      },
+      "interpretation": "The fallback ignores source_id. Canonical SAR object IDs did not collide.",
+      "context": {}
+    },
+    {
+      "probe_id": "P10",
+      "name": "Estimated capture time has no explicit field-origin marker",
+      "observed": {
+        "capture_time_filled": true,
+        "provenance_fields": [
+          "parent_object_ids",
+          "source_native_id",
+          "created_by_component",
+          "component_version",
+          "configuration_version"
+        ]
+      },
+      "interpretation": "The scaffold fills missing values but its current provenance type lacks explicit generated/estimated-field markers required by the shared adapter policy.",
+      "context": {}
+    },
+    {
+      "probe_id": "P11",
+      "name": "Run/session identifiers absent from these emitted records",
+      "observed": {
+        "telemetry_records": 4,
+        "run_id_present": false,
+        "session_id_present": false
+      },
+      "interpretation": "These scaffold outputs do not demonstrate D01.04 run/session propagation. No proposed ExecutionContext has been implemented.",
+      "context": {}
+    },
+    {
+      "probe_id": "P12",
+      "name": "L2 reuses the incoming mutable TimeContext instance",
+      "observed": {
+        "time_context_is_same_instance": true,
+        "parent_link_preserved": true
+      },
+      "interpretation": "Relevant to issue 23 proposed metadata-isolation policy. This is not by itself a violation of a currently agreed immutability requirement.",
+      "context": {}
+    },
+    {
+      "probe_id": "P13",
+      "name": "Numerically implausible audio dimensions accepted",
+      "observed": {
+        "stage_status": "ok",
+        "sample_rate_hz": 0,
+        "channel_count": 0,
+        "frame_index": -1
+      },
+      "interpretation": "Presence-only wording needs explicit type/range rules and implementation checks. Proposed range validation is not an already executed approved schema test.",
+      "context": {}
+    }
+  ],
+  "limits": [
+    "Synthetic sample values only. No microphone, gating signal processor, clock calibration, deletion engine, or deployed system was exercised.",
+    "StageStatus.OK describes scaffold behavior, not contract certification.",
+    "Gating/order context is explicitly a review assumption where noted.",
+    "Reference metadata remains in stored synthetic artifacts even when absent from the emitted payload.",
+    "Issue 23 diagrams and context/validator interfaces remain proposals."
+  ]
+}

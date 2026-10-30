@@ -1,0 +1,27 @@
+{
+  "issue_url": "https://github.com/CHI-CityTech/Self-Aware-Room/issues/24",
+  "assessment_date_local": "2026-10-28",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "local_commit": "d72b8eac9c5654e9a00466c4b83a9ec539e33feb",
+  "local_branch": "tamim/issue-24-audio-contract-review",
+  "remote_changes_made": false,
+  "push_access": false,
+  "class_reference": {
+    "library_file_id": "libfile_67c808276fe4819183c69afc361ac614",
+    "file_id": "file_00000000ceb481f5a31a79cf1da8baa1",
+    "modified_at": "2026-10-29T00:53:40.320150Z",
+    "bytes": 170536,
+    "sha256": "b18fa52a72872c2ff4d7575545471437f33f5f927bc6a79a1ea5a2a52b3bc6cf",
+    "status": "proposal, approval not established",
+    "local_commit": "4f714beb6244679511ae22d562f03339dc422886",
+    "current_saved_text_verified": true
+  },
+  "file_sha256": {
+    "docs/assets/issue24/audio_class_mapping.csv": "e4a4b58c86d43f44b2a5b3166566199818c5e36d27e9099e91df93b5f1d4fc3c",
+    "docs/assets/issue24/audio_conformance_checklist.csv": "3353e075164fcf6374b991f776df7131f0f160eac1d81e6d7274bab18429a08f",
+    "docs/assets/issue24/audio_review_findings.csv": "60864e9b198dbcefe59b90d07ff6cf82ec221ce5a799ac0cbdf29cde3a61e423",
+    "docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md": "fcf8cb55e0ab8319b64731371fb2ae6d6884a8d1a470f912e836bb39fd27398c",
+    "docs/computational/README.md": "7f2875b659bf54838cde9fe9f1c01345787c91e0828cc73bcfe3213cf9586356",
+    "docs/computational/proposals/issue-24/SAR_Audio_Contract_Class_Alignment_Review_V1_2026-10-28.md": "41b985105ff3caa490c01bb571fe63c635173f14e5b9f06520ae72e167820f62"
+  }
+}
