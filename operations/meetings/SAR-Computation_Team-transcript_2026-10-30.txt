@@ -1,0 +1,1283 @@
+WEBVTT
+
+00:00:21.000 --> 00:00:22.000
+Kazi Tamim Nomany: Hello, Professor.
+
+00:00:22.000 --> 00:00:24.000
+David Smith: My apologies. I had —.
+
+00:00:22.000 --> 00:00:24.000
+Kazi Rahimu Islam: Good afternoon, Professor.
+
+00:00:23.000 --> 00:00:24.000
+Kazi Tamim Nomany: Good afternoon, Professor.
+
+00:00:24.000 --> 00:00:35.000
+David Smith: Hi! I was on my other Zoom account and saying, what… where is everybody? And then I said, oh wait, this happened last time. I've got to make my other… this, um, in fact…
+
+00:00:29.000 --> 00:00:30.000
+Kazi Tamim Nomany: For the time being.
+
+00:00:35.000 --> 00:00:38.000
+David Smith: Am I actually even host? Do I have all the tools? I guess I do.
+
+00:00:40.000 --> 00:00:42.000
+Kazi Tamim Nomany: Yes, you are the host.
+
+00:00:41.000 --> 00:00:54.000
+David Smith: Yeah, so I'm good. Okay, great. So, oh, yeah, here are my three Kazis, and also Sunima is going to be joining us.
+
+00:00:43.000 --> 00:00:44.000
+Kazi Tamim Nomany: Mm-hmm.
+
+00:00:55.000 --> 00:01:00.000
+David Smith: And yeah, so this is great.
+
+00:01:00.000 --> 00:01:03.000
+David Smith: Um, so, uh.
+
+00:01:02.000 --> 00:01:05.000
+Kazi Tamim Nomany: Maybe, uh, possible.
+
+00:01:04.000 --> 00:01:05.000
+David Smith: I'm sorry.
+
+00:01:04.000 --> 00:01:06.000
+Tasin Kazi: Yes, Professor, it's Kazi.
+
+00:01:05.000 --> 00:01:06.000
+Kazi Tamim Nomany: I'm sorry. Awesome.
+
+00:01:06.000 --> 00:01:08.000
+David Smith: Yes, hi.
+
+00:01:08.000 --> 00:01:10.000
+Tasin Kazi: Dasi Dasin.
+
+00:01:08.000 --> 00:01:09.000
+David Smith: I have a…
+
+00:01:09.000 --> 00:01:12.000
+David Smith: Yes, I see all three of you.
+
+00:01:11.000 --> 00:01:14.000
+Tasin Kazi: Yes, we are here at the hackathon.
+
+00:01:14.000 --> 00:01:19.000
+David Smith: Yes. Oh, at the hackathon. Excellent. So you're multitasking here.
+
+00:01:16.000 --> 00:01:18.000
+Tasin Kazi: Yeah.
+
+00:01:18.000 --> 00:01:27.000
+Tasin Kazi: Yeah. So I just… I joined to discuss a few things, you know. I emailed…
+
+00:01:19.000 --> 00:01:20.000
+David Smith: Good.
+
+00:01:27.000 --> 00:01:28.000
+Tasin Kazi: if, uh…
+
+00:01:28.000 --> 00:01:31.000
+Tasin Kazi: Professor Milonas, uh…
+
+00:01:31.000 --> 00:01:34.000
+Tasin Kazi: Regarding the adjunct position.
+
+00:01:33.000 --> 00:01:35.000
+David Smith: Mm-hmm.
+
+00:01:34.000 --> 00:01:40.000
+Tasin Kazi: And I also spoke with Professor Marcos Pinto, uh, just a few minutes ago.
+
+00:01:40.000 --> 00:01:41.000
+David Smith: Mm-hmm.
+
+00:01:40.000 --> 00:01:46.000
+Tasin Kazi: And they are saying that there could be some possibility of, uh.
+
+00:01:46.000 --> 00:01:49.000
+Tasin Kazi: Yeah. Finger crossed.
+
+00:01:48.000 --> 00:02:06.000
+David Smith: Yeah, no, that… yeah. I mean, to be honest, I would be surprised, just because of the number of the CST1101s, 1102s, 1000s, that… that they need adjuncts for. There has to be a turnover, you know, you're well… very well regarded in the department, and…
+
+00:01:49.000 --> 00:01:50.000
+Tasin Kazi: Yes, bye.
+
+00:01:58.000 --> 00:02:00.000
+Tasin Kazi: Yeah.
+
+00:02:07.000 --> 00:02:11.000
+David Smith: You know, you would certainly qualify to teach one of these courses. So anyway.
+
+00:02:10.000 --> 00:02:15.000
+Tasin Kazi: Yeah, even if not the foundational computer science process, I'm open to.
+
+00:02:15.000 --> 00:02:18.000
+Tasin Kazi: Teach, you know, the data science courses as well, a bit.
+
+00:02:17.000 --> 00:02:22.000
+David Smith: Oh, absolutely. I'm just saying lowest hanging fruit. There's Sunima. Hi.
+
+00:02:20.000 --> 00:02:21.000
+Tasin Kazi: Yeah.
+
+00:02:22.000 --> 00:02:24.000
+Tasin Kazi: Yeah.
+
+00:02:24.000 --> 00:02:28.000
+David Smith: Yeah, so good. I'm glad to hear that.
+
+00:02:26.000 --> 00:02:27.000
+Tasin Kazi: Mm-hmm.
+
+00:02:28.000 --> 00:02:43.000
+David Smith: Yeah. So welcome. I think this is my sort of my computational team. But I gather, you know, I forgot that Jabbar should also is also part of it, and I don't know if I included him on the link, but we'll definitely.
+
+00:02:43.000 --> 00:02:47.000
+David Smith: want to make sure that we can.
+
+00:02:47.000 --> 00:03:03.000
+David Smith: include all that. So I just sort of want to go around. I know all the Kazis know each other. They share DNA. And but I just want to introduce you all because Sunima is.
+
+00:02:56.000 --> 00:02:57.000
+Tasin Kazi: Okay.
+
+00:03:03.000 --> 00:03:09.000
+David Smith: Also computer science major, but she's at it. You were at Caldwell and now you're at.
+
+00:03:09.000 --> 00:03:10.000
+David Smith: Um…
+
+00:03:10.000 --> 00:03:12.000
+Sunima Dangol: William Patterson.
+
+00:03:10.000 --> 00:03:26.000
+David Smith: William Patterson, right. So she's a senior in, um, and, uh, has been working with us on the self-aware room. So, uh, she was one of the chief fellows this summer, and, uh, what we want to do now is that we spent.
+
+00:03:26.000 --> 00:03:37.000
+David Smith: you know, quite a bit of time, uh, speculating about it. I tasked, uh, Qazi Nomani, um, and thank you very much for the three reports. Um…
+
+00:03:34.000 --> 00:03:36.000
+Kazi Tamim Nomany: Yes.
+
+00:03:36.000 --> 00:03:38.000
+Kazi Tamim Nomany: Yes.
+
+00:03:37.000 --> 00:03:48.000
+David Smith: and I've started comments on one of them. I think I… I think I started with 22. And, um, also, just so I can share my screen…
+
+00:03:43.000 --> 00:03:44.000
+Kazi Tamim Nomany: Mm-h.
+
+00:03:49.000 --> 00:03:52.000
+David Smith: Um, let me, yeah, this is the.
+
+00:03:52.000 --> 00:03:54.000
+David Smith: Oh, not that.
+
+00:03:55.000 --> 00:03:57.000
+David Smith: Sorry.
+
+00:03:57.000 --> 00:04:00.000
+David Smith: Share. Let me share the entire.
+
+00:04:01.000 --> 00:04:06.000
+David Smith: Oh, yeah, I just I just pushed it. So let me just go to.
+
+00:04:06.000 --> 00:04:16.000
+David Smith: Github. Here we are. So in the self-aware room, I've started just so you know where we can, where this can go under documents.
+
+00:04:16.000 --> 00:04:19.000
+David Smith: And then under research.
+
+00:04:20.000 --> 00:04:21.000
+David Smith: is…
+
+00:04:21.000 --> 00:04:25.000
+David Smith: where I put your proposal.
+
+00:04:25.000 --> 00:04:39.000
+David Smith: stuff, so that they're available to everybody. And so, these are… these… and… and thank you very much… I mean, I know you used AI, but thank you very much for all the, um… for the… wait, did I do the one I wanted to? Yeah, this is…
+
+00:04:27.000 --> 00:04:29.000
+Kazi Tamim Nomany: Right, yeah.
+
+00:04:40.000 --> 00:04:46.000
+David Smith: Is it? This is the proposal for review in issue 22. That sort of launches the whole thing right?
+
+00:04:45.000 --> 00:04:46.000
+Kazi Tamim Nomany: Yes.
+
+00:04:45.000 --> 00:04:46.000
+Tasin Kazi: Yes.
+
+00:04:46.000 --> 00:04:52.000
+David Smith: Yeah. So, anyway, here they are, and I appreciate very much that you linked to the actual, um…
+
+00:04:52.000 --> 00:04:56.000
+David Smith: To the actual issue, and then, um…
+
+00:04:54.000 --> 00:04:56.000
+Kazi Tamim Nomany: Mm-hmm.
+
+00:04:58.000 --> 00:05:05.000
+Kazi Tamim Nomany: And then you either download the zip, and then from there you get all of this file inside there.
+
+00:04:59.000 --> 00:05:03.000
+Tasin Kazi: Download the step, and then from there you can call.
+
+00:05:03.000 --> 00:05:04.000
+Tasin Kazi: Bye.
+
+00:05:04.000 --> 00:05:20.000
+David Smith: Yes. Except that I'm just pointing that I they're actually now in here. Under research, no money. So this is where you can where also where you can store them. Right? And because they were marked down and stuff, I just went ahead and unzipped them and put them in directly.
+
+00:05:09.000 --> 00:05:11.000
+Kazi Tamim Nomany: Yes, yep, perfect.
+
+00:05:09.000 --> 00:05:11.000
+Tasin Kazi: Yeah, that would work.
+
+00:05:11.000 --> 00:05:12.000
+Kazi Tamim Nomany: Mmhm.
+
+00:05:14.000 --> 00:05:16.000
+Kazi Tamim Nomany: Okay.
+
+00:05:20.000 --> 00:05:21.000
+Kazi Tamim Nomany: Okay.
+
+00:05:20.000 --> 00:05:25.000
+David Smith: Um, so I started the commenting. I noticed that, I guess…
+
+00:05:25.000 --> 00:05:47.000
+David Smith: Oh, yeah. So here it is. Let me just comment. I mean, I'm just. I'll just put the comment in. So it's here. I started to work my way through. I had some questions. I think there's a very good structure just for the rest of of people. Kazi has been sort of tasked with looking at these initial contracts and coming up with potential class diagrams and things for.
+
+00:05:47.000 --> 00:05:54.000
+David Smith: Uh, some of the, um… the way that we have to send data through.
+
+00:05:54.000 --> 00:06:12.000
+David Smith: And we have a variety of different places within the self-aware room that we want to have some responsibility towards being able to generate an entire pipeline with the code that starts with sort of an empty.
+
+00:06:12.000 --> 00:06:22.000
+David Smith: class, right, so that all you're doing is you're passing the input channel to the output channel. I do have within the, uh, within the.
+
+00:06:22.000 --> 00:06:26.000
+David Smith: within the Github. I mean, yeah, within the site.
+
+00:06:28.000 --> 00:06:31.000
+David Smith: Oh, under…
+
+00:06:31.000 --> 00:06:34.000
+David Smith: Did I update it here?
+
+00:06:35.000 --> 00:06:37.000
+David Smith: No, this is the earlier one.
+
+00:06:46.000 --> 00:07:03.000
+David Smith: Yes, so in the general computational pipeline spec, we have this conceptual diagram recognizing that we have sort of an accumulation area. Can you see my mouse when I go like this?
+
+00:07:02.000 --> 00:07:04.000
+Kazi Tamim Nomany: Yes.
+
+00:07:03.000 --> 00:07:19.000
+David Smith: Okay, so we have an accumulation area over here, which is going to be arbitrarily large, right? We're going to have a variety of number of sensors, and these sensors will just continue to proliferate as we continue to add them.
+
+00:07:19.000 --> 00:07:34.000
+David Smith: You know, add new classes of sensors. We've already done work on microphone acquisition. That's what Sunima did. Jabbar is working with heat and, ambient temperature. These types of, one of those types of things.
+
+00:07:34.000 --> 00:07:38.000
+David Smith: I'm sure that there are. I'm meeting with.
+
+00:07:38.000 --> 00:07:41.000
+David Smith: with Ben Mendoza's.
+
+00:07:39.000 --> 00:07:41.000
+Tasin Kazi: Hello, guys.
+
+00:07:41.000 --> 00:07:46.000
+Tasin Kazi: Um, I'm gonna put this for you guys, if you'd like to watch, put it on, so…
+
+00:07:41.000 --> 00:07:57.000
+David Smith: group of Cet students who can consider grabbing one of the sensors for a project. And what that means is is that as we are moving with more and more people that we need to make sure that our specifications.
+
+00:07:49.000 --> 00:07:50.000
+Tasin Kazi: You've got it from my voic.
+
+00:07:50.000 --> 00:07:51.000
+Tasin Kazi: That one.
+
+00:07:57.000 --> 00:08:00.000
+David Smith: work well.
+
+00:08:01.000 --> 00:08:20.000
+David Smith: Also, we're dealing with this idea of introducing Agentic behavior across the appropriate places within it, recognizing that at the moment we may rely on external LLMs, we may rely on other types of agents that may not necessarily live within this.
+
+00:08:20.000 --> 00:08:35.000
+David Smith: but that we want to be able to plan for the point when this could be a self-contained. Maybe using… reaching out to certain, um, external AIs, but relying a lot on this very… on this large database that we're going to be accumulating.
+
+00:08:35.000 --> 00:08:37.000
+David Smith: Um…
+
+00:08:37.000 --> 00:08:56.000
+David Smith: So, what I wanted to do now is to just sort of, looking through the different types of areas, I wanted to see what people are interested in working on. There's plenty of space, and I want to give all of you opportunities to work in areas that are of greatest interest.
+
+00:08:56.000 --> 00:09:05.000
+David Smith: Um, I also think, um, Qazi Islam, didn't… don't we have also someone that was doing database, or am I mixing things up?
+
+00:09:05.000 --> 00:09:20.000
+Kazi Rahimu Islam: No, Professor. So there was a student who was engaged in working with database, but then they didn't continue their effort. As a result, me and you, we discussed that they will not be continuing moving forward.
+
+00:09:19.000 --> 00:09:23.000
+David Smith: Right, right. That's what I seem to recall.
+
+00:09:22.000 --> 00:09:23.000
+Kazi Rahimu Islam: Yes.
+
+00:09:23.000 --> 00:09:25.000
+David Smith: So…
+
+00:09:25.000 --> 00:09:42.000
+David Smith: that is, you know, that is one of the tasks, is to come up with, with, uh, some kind of a structure, um, that allows us to use maybe something traditional, I'm thinking. Um, it looks like, I think Kazi Nomani, that it was MongoDB, was that what?
+
+00:09:42.000 --> 00:09:45.000
+David Smith: Was one of the recommendations?
+
+00:09:44.000 --> 00:09:46.000
+Kazi Tamim Nomany: Yes, I think so, yep.
+
+00:09:45.000 --> 00:09:56.000
+David Smith: Yeah. So I would love to be able to start to consider this next steps. Do you want to sort of talk through? I'm going to.
+
+00:09:56.000 --> 00:09:58.000
+David Smith: um…
+
+00:09:59.000 --> 00:10:11.000
+David Smith: allow… I'm gonna allow people to share, but, uh, Kazi Nomani, if you could just sort of talk your way through what you discovered, etc. Let me just make sure that sharing options are on for everybody.
+
+00:10:14.000 --> 00:10:16.000
+David Smith: Those tools.
+
+00:10:17.000 --> 00:10:20.000
+David Smith: Sharing, right.
+
+00:10:20.000 --> 00:10:23.000
+David Smith: Share settings.
+
+00:10:30.000 --> 00:10:31.000
+David Smith: Like, what's going on?
+
+00:10:33.000 --> 00:10:35.000
+David Smith: Oh, there it is.
+
+00:10:35.000 --> 00:10:38.000
+David Smith: Sorry. Okay.
+
+00:10:38.000 --> 00:10:40.000
+David Smith: So if you want to just sort of.
+
+00:10:41.000 --> 00:10:49.000
+David Smith: Sort of talk through what we're thinking about or just pointing through the documents, what is in each?
+
+00:10:49.000 --> 00:10:54.000
+Kazi Tamim Nomany: Yes, Professor, give me just around a minute or two, and then I'll screen share.
+
+00:10:52.000 --> 00:10:54.000
+David Smith: Yeah, sure.
+
+00:10:54.000 --> 00:11:03.000
+David Smith: Yeah, that's good. And also for everyone else, it is available up on the GitHub site, so you can access it directly as well.
+
+00:11:04.000 --> 00:11:15.000
+Sunima Dangol: Meanwhile, I had a quick question. You mentioned that you will introduce AI, but will we develop it from scratch, or are we using some other LLMs?
+
+00:11:06.000 --> 00:11:07.000
+David Smith: Yes.
+
+00:11:15.000 --> 00:11:31.000
+David Smith: I think it depends on what the particular activity is and how we're deploying the AI. Qazi Islam has, I think, been doing probably the deepest work in the way this relates. Do you want to talk a little bit while Qazi Nomani is getting set up?
+
+00:11:21.000 --> 00:11:23.000
+Sunima Dangol: Hmm.
+
+00:11:30.000 --> 00:11:48.000
+Kazi Rahimu Islam: Yes, yes. So, um, so… so previously, me and Professor Smith were thinking about an approach where we, um, do all our work using local LLMs, which is gonna be living in our computer. We'll be downloading the model, and we'll be assigning it to the stuff that we need.
+
+00:11:48.000 --> 00:12:05.000
+Kazi Rahimu Islam: But then we realized that currently if we want to go to frontier level, which is GPT, Gemini, Claude level models, we will hit a storage benchmark, I mean storage limit beyond which we cannot scale the models up.
+
+00:12:05.000 --> 00:12:24.000
+Kazi Rahimu Islam: As a result, now we are taking a hybrid approach, which means we will do the tasks that can be done by local source LLMs using open source LLMs. And the tasks that are extremely complex will be currently done by commercial LLMs such as GPT and Claude. And in the future.
+
+00:12:24.000 --> 00:12:29.000
+Kazi Rahimu Islam: Our approach will be slowly but steadily moving towards making everything local.
+
+00:12:31.000 --> 00:12:44.000
+David Smith: And also considering a distributed, don't think about it as being a single AI, but that we have specialized AI that have tasks that are optimized for whatever it is that we're assigning them to.
+
+00:12:44.000 --> 00:13:02.000
+Kazi Rahimu Islam: Yes, so, um, in this case, so there are different local open source AI models that are expert in certain tasks. So, for example, there is a model called DeepSeek7DB, which is a 70 billion parameter model. If you do some more research, you'll be able to understand what I'm talking about.
+
+00:13:02.000 --> 00:13:17.000
+Kazi Rahimu Islam: So that model is an expert model in terms of reasoning. So the model does reasoning and logical thinking really well. But there are other models such as Gemma 4 or Gemma 4, however you spell it. This model is an expert at coding.
+
+00:13:17.000 --> 00:13:32.000
+Kazi Rahimu Islam: So we are not going to be using one single model like we do for ChatGPT and Gemini. We'll be identifying unique models that can be uniquely deployed to do a specific task, and then we're going to be deploying maybe 5, 10, 20 models, however we need.
+
+00:13:32.000 --> 00:13:34.000
+Kazi Rahimu Islam: Depending on the task we do.
+
+00:13:36.000 --> 00:13:38.000
+Sunima Dangol: All right. Sounds great.
+
+00:13:36.000 --> 00:13:38.000
+David Smith: Right. Yeah.
+
+00:13:38.000 --> 00:13:51.000
+David Smith: And so what we'll do is we'll scale up as needed with the local. Um, also, uh, just so that you're aware, at AI Task Force, uh, we're talking about finding ways of, um.
+
+00:13:51.000 --> 00:14:02.000
+David Smith: providing GPU, uh, for students, and in… as a way of just sort of logging on and being able to build stuff. So there's some movement recognizing.
+
+00:14:02.000 --> 00:14:18.000
+David Smith: um, that we have to deal with tokens, and we have to deal with, you know, these types of capabilities. Um, my overall goal is to have local servers that host the… host the local AI, um, but, you know, if we have access to enterprise-level.
+
+00:14:18.000 --> 00:14:37.000
+David Smith: software that's within the CUNY system that we can access, then that makes sense as well. One of the things that we have to remember also within the SAR is, and this is something I pointed out, Kazi Nomani, it's in the comments and I haven't finished working my way through.
+
+00:14:37.000 --> 00:14:55.000
+David Smith: But one of the types of sensors that I'm anticipating we're going to want to be able to take advantage of are smartphones and mobile devices that are within the space. So we recognize that, you know, these are everywhere, and why not be able to take advantage of their microphones there?
+
+00:14:55.000 --> 00:14:58.000
+David Smith: And you know the the other.
+
+00:14:58.000 --> 00:15:14.000
+David Smith: aspects of the sensors and output, recognizing, of course, that someone has to voluntarily and explicitly log on to the system, right? We're not going to stealthily take advantage of it, but if someone wants to participate with their phone, then we have this opportunity to consider that as a sensor element as well.
+
+00:15:14.000 --> 00:15:20.000
+David Smith: Even though it also has its own intelligence and things attached to it.
+
+00:15:20.000 --> 00:15:21.000
+David Smith: So…
+
+00:15:21.000 --> 00:15:24.000
+Kazi Tamim Nomany: OK, Professor, I can screen share now.
+
+00:15:22.000 --> 00:15:23.000
+David Smith: I'm not.
+
+00:15:23.000 --> 00:15:25.000
+David Smith: Yeah. Okay. Yeah. Go ahead.
+
+00:15:24.000 --> 00:15:25.000
+Kazi Tamim Nomany: Perfect.
+
+00:15:25.000 --> 00:15:27.000
+Kazi Tamim Nomany: Perfect.
+
+00:15:30.000 --> 00:15:34.000
+Kazi Tamim Nomany: Application windows… okay…
+
+00:15:35.000 --> 00:15:36.000
+Kazi Tamim Nomany: Okay.
+
+00:15:38.000 --> 00:15:40.000
+Kazi Tamim Nomany: Okay, can you see my screen?
+
+00:15:40.000 --> 00:15:42.000
+David Smith: Uh, yes.
+
+00:15:42.000 --> 00:15:43.000
+Kazi Tamim Nomany: Perfect.
+
+00:15:43.000 --> 00:15:47.000
+Kazi Tamim Nomany: So, for my, um…
+
+00:15:47.000 --> 00:15:50.000
+Kazi Tamim Nomany: Issue 2, uh, 22.
+
+00:15:50.000 --> 00:15:54.000
+Kazi Tamim Nomany: What I proposed was… give me a second…
+
+00:15:54.000 --> 00:15:56.000
+Kazi Tamim Nomany: Sending the user ID.
+
+00:15:56.000 --> 00:16:01.000
+Kazi Tamim Nomany: Uh, that you told me about. Let me search it up right now for you. Ctrl-F…
+
+00:16:00.000 --> 00:16:09.000
+David Smith: Right. And this is something, Sunim, and we we discussed earlier. But in terms of developing these.
+
+00:16:01.000 --> 00:16:03.000
+Kazi Tamim Nomany: Wow.
+
+00:16:03.000 --> 00:16:05.000
+Kazi Tamim Nomany: GEICO…
+
+00:16:05.000 --> 00:16:07.000
+Kazi Tamim Nomany: I told you this is a shark animal.
+
+00:16:09.000 --> 00:16:11.000
+Kazi Tamim Nomany: Oh, yeah, yeah, yeah.
+
+00:16:09.000 --> 00:16:10.000
+David Smith: I…
+
+00:16:10.000 --> 00:16:16.000
+David Smith: what are the necessary IDs that we're going to need for all the different components?
+
+00:16:15.000 --> 00:16:22.000
+Kazi Tamim Nomany: So, yeah, so I propose giving, uh, over here, um, giving each physical sensor a permanent ID, I think.
+
+00:16:21.000 --> 00:16:22.000
+David Smith: Mm-hmm.
+
+00:16:22.000 --> 00:16:39.000
+Kazi Tamim Nomany: Moving the same center to another room should keep the ID as well, and replacing the sensor should create a new ID. So if you replace the sensor, it should create a new ID. And we talked about it before, me and you, and I also separated the sensor ID from the stream ID.
+
+00:16:31.000 --> 00:16:32.000
+David Smith: Mm-hmm.
+
+00:16:39.000 --> 00:16:45.000
+Kazi Tamim Nomany: And then so one device can send different types of data. So.
+
+00:16:45.000 --> 00:16:57.000
+Kazi Tamim Nomany: each streams, uh, needs its own ID, basically. It's its own needs on its ID, and the review also found that two streams could receive the same backup frame label.
+
+00:16:57.000 --> 00:17:08.000
+Kazi Tamim Nomany: and their main SAR, um, records should stay the same. Oh, I mean, should stay different. And my recommendation, basically, is just to improve the backup naming rules as well.
+
+00:17:09.000 --> 00:17:14.000
+David Smith: Right. And we're looking at UUID v4.
+
+00:17:13.000 --> 00:17:16.000
+Kazi Tamim Nomany: Yeah. Mm-hmm.
+
+00:17:16.000 --> 00:17:20.000
+Kazi Tamim Nomany: And then we have to keep the new source IDs. Yeah.
+
+00:17:20.000 --> 00:17:21.000
+David Smith: Mm-hmm.
+
+00:17:21.000 --> 00:17:24.000
+David Smith: So, um…
+
+00:17:24.000 --> 00:17:31.000
+David Smith: We also have… so, yeah, so this is, uh, some of the… some of the information about.
+
+00:17:31.000 --> 00:17:33.000
+David Smith: Um.
+
+00:17:33.000 --> 00:17:41.000
+David Smith: how a sensor is introduced and how it flows through it. But then I think, oh, but you're in six.
+
+00:17:41.000 --> 00:17:43.000
+Kazi Tamim Nomany: I'm… yeah. Mm-hmm.
+
+00:17:41.000 --> 00:17:47.000
+David Smith: If you go up to… yeah, if you go up to 4, I think it's 4, or is it 3.1?
+
+00:17:47.000 --> 00:17:50.000
+David Smith: I think it's 3.1. Go to 3.1.
+
+00:17:49.000 --> 00:17:51.000
+Kazi Tamim Nomany: Yep.
+
+00:17:51.000 --> 00:18:03.000
+David Smith: Up above on the table, I'm sorry. Yeah, so this table is, I think, a place that merits the most discussion in terms of formalization.
+
+00:17:53.000 --> 00:17:55.000
+Kazi Tamim Nomany: Definitely. Yeah.
+
+00:18:03.000 --> 00:18:11.000
+David Smith: Um, because what we're doing is we're not only defining… what you're also doing with this proposal is not only defining the types of.
+
+00:18:11.000 --> 00:18:18.000
+David Smith: tagging, or the different types of IDs, but also you're sort of starting to define a set of class.
+
+00:18:18.000 --> 00:18:26.000
+David Smith: of classes that are going to be required in order to describe the state of this. And so, um…
+
+00:18:26.000 --> 00:18:33.000
+David Smith: will want to have some discussions. I started, I started some comments in there in the, um, in the issue itself.
+
+00:18:33.000 --> 00:18:35.000
+Kazi Tamim Nomany: Yeah.
+
+00:18:35.000 --> 00:18:37.000
+David Smith: But…
+
+00:18:37.000 --> 00:18:38.000
+David Smith: what…
+
+00:18:38.000 --> 00:18:54.000
+David Smith: When we think about when I, when I think about the way that information is going to flow through it, we not only need to have like a, a stream and we recognize we'll have event based and stream based protocols, but we also need packets.
+
+00:18:55.000 --> 00:18:57.000
+David Smith: Which…
+
+00:18:57.000 --> 00:19:13.000
+David Smith: hold subsets of the data of the stream, right? So we're slicing up the stream and they're going into data packets because we can't, you know, we need to close a packet in order to store it. And so we can't have an infinite stream being a single.
+
+00:19:13.000 --> 00:19:20.000
+David Smith: Um, object. We can have that, and I know we did it as a, uh… can you scroll down just a little bit?
+
+00:19:20.000 --> 00:19:22.000
+Kazi Tamim Nomany: Mm-hmm.
+
+00:19:20.000 --> 00:19:27.000
+David Smith: Yeah, it's down… it's, uh… so we have the frames… no, I'm sorry, it's still within the table, still within the table.
+
+00:19:27.000 --> 00:19:28.000
+Kazi Tamim Nomany: Able to, yeah, okay.
+
+00:19:27.000 --> 00:19:48.000
+David Smith: Yeah, at the bottom of the table, yeah. So we have this idea that we're going to open a stream, the stream is going to have some unique IDs, and it's going to start sending packets. And these packets have to have ways of being able to identify themselves. And so we need that particular type of a protocol as well. I'm assuming.
+
+00:19:48.000 --> 00:19:55.000
+David Smith: that within this list, that we have that capability. I'm not sure we need this number of different, um…
+
+00:19:55.000 --> 00:19:57.000
+David Smith: IDs…
+
+00:19:57.000 --> 00:20:03.000
+David Smith: And that's something I think that we want to talk about as we start working our way through the protocol.
+
+00:20:03.000 --> 00:20:05.000
+Kazi Tamim Nomany: Yeah.
+
+00:20:05.000 --> 00:20:06.000
+Kazi Tamim Nomany: Mm-hmm.
+
+00:20:06.000 --> 00:20:08.000
+David Smith: So…
+
+00:20:08.000 --> 00:20:19.000
+David Smith: I'm all in favor of sort of a top-down and a bottom-up approach at the same time. So, one of the… one of the tasks, I think, that's very next for coders…
+
+00:20:19.000 --> 00:20:25.000
+David Smith: And I think, did you do — you did a UML one as well, right? Is that 23?
+
+00:20:26.000 --> 00:20:30.000
+Kazi Tamim Nomany: I think so, uh, you are, uh, OM…
+
+00:20:30.000 --> 00:20:32.000
+Kazi Tamim Nomany: The open model one. One second.
+
+00:20:33.000 --> 00:20:35.000
+David Smith: Yeah, I think that's…
+
+00:20:33.000 --> 00:20:35.000
+Kazi Tamim Nomany: Open model, yeah.
+
+00:20:35.000 --> 00:20:40.000
+David Smith: Yeah, so let's… let's open up that particular, um…
+
+00:20:40.000 --> 00:20:44.000
+Kazi Tamim Nomany: One second, my proposal…
+
+00:20:53.000 --> 00:20:54.000
+Kazi Tamim Nomany: Okay.
+
+00:20:54.000 --> 00:20:55.000
+David Smith: Okay.
+
+00:20:55.000 --> 00:20:59.000
+David Smith: Uh, so this is…
+
+00:21:00.000 --> 00:21:01.000
+David Smith: um…
+
+00:21:00.000 --> 00:21:02.000
+Kazi Tamim Nomany: 23. Mm-hmm.
+
+00:21:03.000 --> 00:21:06.000
+David Smith: Right. So what?
+
+00:21:06.000 --> 00:21:18.000
+David Smith: Have you — I mean, do we have — I'm sorry that I haven't gotten to the whole thing yet. But do we have the basic class definitions and things for — so this was like the — OK.
+
+00:21:15.000 --> 00:21:18.000
+Kazi Tamim Nomany: Yeah, so that's what…
+
+00:21:18.000 --> 00:21:29.000
+David Smith: So this is sort of the overall abstract data object that every single object no matter what has, or is this a subset of all the possible things that we might require?
+
+00:21:29.000 --> 00:21:44.000
+Kazi Tamim Nomany: So, like, what I propose for this is keep share fields together, and put special fields with the record types that needs them, and the five diagrams that I have all over.
+
+00:21:34.000 --> 00:21:36.000
+David Smith: Mm-hmm.
+
+00:21:37.000 --> 00:21:40.000
+David Smith: Of course. Mm-hmm.
+
+00:21:44.000 --> 00:21:49.000
+Kazi Tamim Nomany: It just shows the proposed structure also over here.
+
+00:21:47.000 --> 00:21:48.000
+David Smith: Okay.
+
+00:21:48.000 --> 00:21:54.000
+David Smith: And so let's take. So we have the abstract object, or the.
+
+00:21:49.000 --> 00:21:50.000
+Kazi Tamim Nomany: Yeah, it's…
+
+00:21:54.000 --> 00:21:56.000
+Kazi Tamim Nomany: Mm-hmm.
+
+00:21:56.000 --> 00:22:03.000
+David Smith: I'm assuming it's a class, not an object, or am I wrong?
+
+00:22:03.000 --> 00:22:10.000
+David Smith: I don't think you can… I don't think you can instantiate an abstract class. I think it's probably… I mean, if it's the ab… it's…
+
+00:22:03.000 --> 00:22:04.000
+Kazi Tamim Nomany: I think…
+
+00:22:09.000 --> 00:22:12.000
+Kazi Tamim Nomany: On every object, yeah.
+
+00:22:11.000 --> 00:22:24.000
+David Smith: Yeah, so it's part… it's part of the class diagram, not… not in class instantiate. I mean, it's not the item itself. Anyway, that's just terminology. Okay, so we're saying every single one of our… any…
+
+00:22:19.000 --> 00:22:20.000
+Kazi Tamim Nomany: Yeah.
+
+00:22:24.000 --> 00:22:34.000
+David Smith: any object within the system, including parts of the system, so like L1, L0, L1, L2, L3, those are also going to share these attributes.
+
+00:22:34.000 --> 00:22:38.000
+Kazi Tamim Nomany: Maybe, I don't think so, no, uh, I think…
+
+00:22:38.000 --> 00:22:43.000
+Kazi Tamim Nomany: Other fields belong only to certain record types.
+
+00:22:42.000 --> 00:22:46.000
+David Smith: Yeah, okay, that's what I was thinking. So so so yeah.
+
+00:22:43.000 --> 00:22:47.000
+Kazi Tamim Nomany: So, yeah, so for example, the temperature data should not need.
+
+00:22:47.000 --> 00:22:52.000
+Kazi Tamim Nomany: the microphone setting, I guess, in a way, right?
+
+00:22:53.000 --> 00:23:06.000
+David Smith: Um, well, absolutely. I mean, my idea is, is that within the abstract class, or the ab- you know, the abstraction is you have those identities which everything will have no matter what.
+
+00:23:06.000 --> 00:23:12.000
+David Smith: So one will be like payload, right? I'm assuming. No, it's dictionary type. I'm, am I?
+
+00:23:08.000 --> 00:23:11.000
+Kazi Tamim Nomany: Yeah, yeah, yes.
+
+00:23:12.000 --> 00:23:13.000
+Kazi Tamim Nomany: This…
+
+00:23:13.000 --> 00:23:19.000
+David Smith: I mean, I'm looking for where, you know, the object is going to hold some kind of data.
+
+00:23:19.000 --> 00:23:20.000
+Kazi Tamim Nomany: Mm-hmm. Yeah.
+
+00:23:19.000 --> 00:23:20.000
+David Smith: Uh, I…
+
+00:23:22.000 --> 00:23:31.000
+David Smith: And so what we're talking about then is that these are — this is the —.
+
+00:23:31.000 --> 00:23:41.000
+David Smith: class object for anything that moves through the system, but it's not the system itself. The system will have its own set of class objects.
+
+00:23:42.000 --> 00:23:44.000
+David Smith: I think. Is that…
+
+00:23:44.000 --> 00:23:48.000
+Kazi Tamim Nomany: That's what the suggests, yeah.
+
+00:23:48.000 --> 00:23:53.000
+David Smith: Yeah, okay, so I think that that's probably our next… one of our next…
+
+00:23:54.000 --> 00:24:09.000
+David Smith: one of the next assignments. And Sunima, I think we started that already. Didn't you work on building some objects that as we pass the microphone through.
+
+00:24:02.000 --> 00:24:05.000
+Kazi Tamim Nomany: Hmm. Yeah.
+
+00:24:05.000 --> 00:24:07.000
+Kazi Tamim Nomany: I don't know. I want to get it.
+
+00:24:09.000 --> 00:24:14.000
+David Smith: that we went through the different L1, L2, L3, or…
+
+00:24:12.000 --> 00:24:15.000
+Sunima Dangol: Uh, yes, but only for the audio.
+
+00:24:15.000 --> 00:24:24.000
+David Smith: Right, so what we want to do is we want to now take that, and we want to make it, um…
+
+00:24:24.000 --> 00:24:25.000
+David Smith: Generic.
+
+00:24:25.000 --> 00:24:43.000
+David Smith: Because once we start thinking about the processing, the sensors are together… I mean, the sensors are on their own until we get to L2, and then they have to… they have to join together into something that's sort of an accumulator type of a package.
+
+00:24:43.000 --> 00:24:48.000
+David Smith: And from that point on, they're all sort of traveling through the same pathway.
+
+00:24:48.000 --> 00:25:06.000
+David Smith: So I think one of the definitions that we would need to do next is to define the object class that defines each one of those Ls. So we have an abstract class for L, and then we have…
+
+00:25:06.000 --> 00:25:12.000
+David Smith: child classes, or we use an interface. We use some kind of a contract to define the, um…
+
+00:25:12.000 --> 00:25:23.000
+David Smith: to define the individual L1, L2, L3, L4, and then those can also be further subclassed depending on the specific type of a sensor.
+
+00:25:23.000 --> 00:25:26.000
+David Smith: So that's a task.
+
+00:25:27.000 --> 00:25:29.000
+David Smith: And uh…
+
+00:25:29.000 --> 00:25:32.000
+Kazi Tamim Nomany: Yes, we are running it down, yeah, on the nodes.
+
+00:25:29.000 --> 00:25:31.000
+David Smith: Do you have?
+
+00:25:31.000 --> 00:25:32.000
+David Smith: Yeah. Okay.
+
+00:25:32.000 --> 00:25:39.000
+David Smith: And I think that that would then complete what we have.
+
+00:25:32.000 --> 00:25:34.000
+Kazi Tamim Nomany: Yeah. Okay.
+
+00:25:37.000 --> 00:25:40.000
+Kazi Tamim Nomany: That issue, yeah.
+
+00:25:39.000 --> 00:25:56.000
+David Smith: for… yeah, and so… and then we have to look at the database, and we have to think about the log, but for now, I'm not… I'm not so concerned that we're actually writing to the database as long as we can send stuff through, and even if we're writing to a flat file, you know, or some serialized thing.
+
+00:25:44.000 --> 00:25:45.000
+Kazi Tamim Nomany: Yep.
+
+00:25:56.000 --> 00:26:03.000
+David Smith: Just to prove that we can write to it, then what we can do is we can work on how best to data package it.
+
+00:26:03.000 --> 00:26:05.000
+David Smith: Um, so…
+
+00:26:05.000 --> 00:26:08.000
+David Smith: I think what that means is, uh…
+
+00:26:09.000 --> 00:26:17.000
+David Smith: Yeah. So, Kazi, I have AI companion on. We're going to summarize and get a transcript, and I'll…
+
+00:26:17.000 --> 00:26:23.000
+David Smith: post the… sort of the deliverables for that, if that…
+
+00:26:23.000 --> 00:26:25.000
+David Smith: Is fine with you.
+
+00:26:26.000 --> 00:26:41.000
+David Smith: But yes, overall, what we need to do is we need to come up with a complete basic abstract class library of everything that is going to become a part of the basic system as defined in the computational specifications.
+
+00:26:41.000 --> 00:26:52.000
+David Smith: So, I think, uh, Sunima, since you were working on the audio path, it might be useful to take a look at the, um…
+
+00:26:52.000 --> 00:26:58.000
+David Smith: the issue 22, 23, 24, and see if you… and see…
+
+00:26:59.000 --> 00:27:05.000
+David Smith: how this is defined, and do we actually have the code there? I didn't… I should look. I can look myself.
+
+00:27:05.000 --> 00:27:07.000
+David Smith: um…
+
+00:27:09.000 --> 00:27:12.000
+David Smith: Under Docs, under…
+
+00:27:13.000 --> 00:27:15.000
+David Smith: research.
+
+00:27:21.000 --> 00:27:23.000
+David Smith: I'm just looking.
+
+00:27:26.000 --> 00:27:32.000
+David Smith: Okay, so you provided. You provide an example with a sensor uid.
+
+00:27:33.000 --> 00:27:50.000
+David Smith: But I think what we need to do is we need to start to declare these classes as object files, right? So that we're declaring what these class sensors are. It's a proposal right now, but it's not the actual code. But we need to start to develop our source.
+
+00:27:47.000 --> 00:27:49.000
+Kazi Tamim Nomany: Yeah. Yeah.
+
+00:27:50.000 --> 00:27:57.000
+David Smith: So why don't we do I think what we can do is we can try it out, so to speak.
+
+00:27:57.000 --> 00:28:12.000
+David Smith: And so, Sunima, if you want to take a look at the AudioStream software and see if there are any questions that you have in terms of being able to use these IDs.
+
+00:28:12.000 --> 00:28:30.000
+David Smith: And at some point, I would hope by, you know, soon that we actually have the class libraries started, at least, so that we can start to build code that instantiates the model, and that we're no longer sort of writing ad hoc code.
+
+00:28:30.000 --> 00:28:42.000
+David Smith: we're calling… we're making calls to these objects instead of having to, you know, write specific stuff. Of course, you know, within the methods are… well, we're in Python, I think. Are we in Python? Is that what we're gonna do, or…
+
+00:28:42.000 --> 00:28:45.000
+Sunima Dangol: Yes, I'm using Python.
+
+00:28:44.000 --> 00:28:47.000
+David Smith: What about other people? Do we have preferences?
+
+00:28:50.000 --> 00:29:01.000
+Kazi Rahimu Islam: Um, I think, Professor, Python will be good for me, personally. I mean, I'm in data science, and the other Kazi's in data science, but I'm not sure for Sunima. I mean, you know…
+
+00:28:58.000 --> 00:28:59.000
+David Smith: Yeah.
+
+00:29:00.000 --> 00:29:02.000
+David Smith: No, Sunima is Python.
+
+00:29:01.000 --> 00:29:04.000
+Kazi Rahimu Islam: Okay, then, then we're good, we're good.
+
+00:29:01.000 --> 00:29:05.000
+Sunima Dangol: I love Python.
+
+00:29:03.000 --> 00:29:27.000
+David Smith: Yeah, yeah. That's what I thought. I just want to make sure that we're fine with Python for now. Okay, so yeah, so I think that that's an assignment is that we have to start declaring these class libraries. And then we can sort of resuscitate the tests, Sunima, by passing it through the class library, through that, once we've assembled the L1 through L5.
+
+00:29:27.000 --> 00:29:40.000
+David Smith: even though we know that in the guts of these, they're not doing anything yet. They're just receiving the data, sending a log, storing a piece of data, and moving it on to the next L.
+
+00:29:40.000 --> 00:29:58.000
+David Smith: Once I think that we can test that this stuff works, then we can start plugging sensors in. And once we have two sensors, and I think I like the idea that Jabbar is doing the heat, but there's not going to be much correlation between heat and sound.
+
+00:29:58.000 --> 00:30:14.000
+David Smith: Because the heat's like relatively slow things happening. So we might want to identify another sensor as well that we can implement so we can start to look and see if we can automatically deal with correlations, which is I think an L2.
+
+00:30:14.000 --> 00:30:17.000
+David Smith: I have to look at the number.
+
+00:30:17.000 --> 00:30:18.000
+David Smith: But.
+
+00:30:20.000 --> 00:30:31.000
+David Smith: Any other ideas? Qazi, I know that you're sitting on the sort of the AI front end. Do you have places that you want to consider contributing at this moment or interesting ideas?
+
+00:30:30.000 --> 00:30:36.000
+Tasin Kazi: Yes, Professor, I have been collaborating with Professor Wicksell, uh…
+
+00:30:35.000 --> 00:30:37.000
+David Smith: Oh, good.
+
+00:30:36.000 --> 00:30:46.000
+Tasin Kazi: uh, there is this, uh, CUNY AI Innovation Grant that, uh, was received by this professor at Hunter College, Professor Raj Korban.
+
+00:30:40.000 --> 00:30:41.000
+David Smith: Mm-hmm.
+
+00:30:46.000 --> 00:30:48.000
+David Smith: Mm-hmm.
+
+00:30:47.000 --> 00:30:55.000
+Tasin Kazi: And we are looking for, uh, sort of an angle to see how we can, uh, get Qi in.
+
+00:30:55.000 --> 00:30:58.000
+Tasin Kazi: To that particular grant.
+
+00:30:57.000 --> 00:31:06.000
+David Smith: Oh, fantastic. I mean, I have an AI — is this the same one? Or is this the next year? Or is it a different AI innovation? Is it part of the empire?
+
+00:31:05.000 --> 00:31:11.000
+Tasin Kazi: It is part of the… yes, it is part of the Kyun ecosystem. Yeah, Kyun AI Innovation Grant, yeah.
+
+00:31:09.000 --> 00:31:11.000
+David Smith: Okay, yeah.
+
+00:31:11.000 --> 00:31:16.000
+David Smith: Yeah, great. Yeah, so yeah, we should find a way, because that's certainly… I would be delighted to have a chat.
+
+00:31:16.000 --> 00:31:25.000
+Tasin Kazi: Yeah, and regarding the IU's program that, uh, you were looking at, and I think you submitted a proposal, how did that come out?
+
+00:31:19.000 --> 00:31:21.000
+David Smith: Mmhm.
+
+00:31:23.000 --> 00:31:24.000
+David Smith: Mm-hmm.
+
+00:31:25.000 --> 00:31:30.000
+David Smith: Um, I think that the evaluation that we start to hear stuff in January…
+
+00:31:30.000 --> 00:31:32.000
+Tasin Kazi: Oh, okay.
+
+00:31:30.000 --> 00:31:35.000
+David Smith: Yeah, no, we haven't heard any feedback yet from it.
+
+00:31:35.000 --> 00:31:36.000
+Tasin Kazi: Okay, okay.
+
+00:31:36.000 --> 00:31:37.000
+David Smith: Yep.
+
+00:31:37.000 --> 00:31:42.000
+Tasin Kazi: Yeah, so these are the updates, you know, more grants are coming, we have more people coming in.
+
+00:31:41.000 --> 00:31:42.000
+David Smith: Mm-hmm.
+
+00:31:42.000 --> 00:31:48.000
+Tasin Kazi: She is, uh, sort of getting that visibility now.
+
+00:31:48.000 --> 00:31:53.000
+David Smith: Yeah, I just found — yeah. And also, I've been doing some —.
+
+00:31:48.000 --> 00:31:50.000
+Tasin Kazi: Compared to last year.
+
+00:31:51.000 --> 00:31:57.000
+Tasin Kazi: And also, I took two of them to a conference, and they presented.
+
+00:31:57.000 --> 00:32:04.000
+Tasin Kazi: uh, your research. I took a picture. Do you wanna… okay, okay. Samim is going to share your screen, and I will show you.
+
+00:32:04.000 --> 00:32:07.000
+David Smith: It's all… your sharing is on.
+
+00:32:05.000 --> 00:32:06.000
+Tasin Kazi: Okay.
+
+00:32:07.000 --> 00:32:09.000
+Tasin Kazi: Yes, yes, he's going to…
+
+00:32:07.000 --> 00:32:10.000
+Kazi Tamim Nomany: No problem, professor. I'm giving this right now.
+
+00:32:10.000 --> 00:32:13.000
+Kazi Tamim Nomany: Professor Nelson.
+
+00:32:13.000 --> 00:32:14.000
+Kazi Tamim Nomany: One sec.
+
+00:32:14.000 --> 00:32:16.000
+Kazi Tamim Nomany: Um…
+
+00:32:16.000 --> 00:32:19.000
+Kazi Tamim Nomany: I'm gonna share the picture…
+
+00:32:21.000 --> 00:32:23.000
+Kazi Tamim Nomany: Okay…
+
+00:32:23.000 --> 00:32:26.000
+Tasin Kazi: I think he shared it in the chat.
+
+00:32:23.000 --> 00:32:25.000
+Kazi Tamim Nomany: Okay…
+
+00:32:25.000 --> 00:32:29.000
+Kazi Tamim Nomany: In the chat, if you guys can see.
+
+00:32:26.000 --> 00:32:27.000
+Tasin Kazi: It's coming.
+
+00:32:27.000 --> 00:32:30.000
+David Smith: Oh, I see it. Chat. Okay.
+
+00:32:29.000 --> 00:32:31.000
+Tasin Kazi: Okay, there you go.
+
+00:32:30.000 --> 00:32:34.000
+Kazi Tamim Nomany: And we shared in Albany, uh, we were in.
+
+00:32:33.000 --> 00:32:39.000
+Tasin Kazi: So this was up in Albany, uh… I took both of them, uh…
+
+00:32:39.000 --> 00:32:42.000
+Tasin Kazi: She is getting that visibility.
+
+00:32:43.000 --> 00:32:46.000
+Tasin Kazi: Uh, to that area as well.
+
+00:32:43.000 --> 00:32:45.000
+David Smith: Oh, pardon.
+
+00:32:46.000 --> 00:32:52.000
+David Smith: And fantastic. You guys look so professional. What's going on?
+
+00:32:50.000 --> 00:32:54.000
+Tasin Kazi: Absolutely. Yeah, yeah, because we are part of CHI.
+
+00:32:53.000 --> 00:33:00.000
+David Smith: Yay. And you're in technical black, too. That's fantastic. Good.
+
+00:32:55.000 --> 00:32:56.000
+Sunima Dangol: Mm-hmm.
+
+00:33:00.000 --> 00:33:04.000
+Tasin Kazi: So, these are the work… grant conference…
+
+00:33:00.000 --> 00:33:01.000
+David Smith: Ah, okay.
+
+00:33:04.000 --> 00:33:06.000
+Tasin Kazi: That are being done.
+
+00:33:05.000 --> 00:33:20.000
+David Smith: That that's fantastic. Yeah. And I did. Actually, I did a search earlier today. I just wanted to see. And so I searched. I went to incognito mode, and then I searched for center of holistic integration, and and we popped up all at the top like pop.
+
+00:33:19.000 --> 00:33:21.000
+Tasin Kazi: Yeah, absolutely. There you go.
+
+00:33:20.000 --> 00:33:23.000
+David Smith: Top first, you know.
+
+00:33:21.000 --> 00:33:24.000
+Tasin Kazi: Our index number is getting higher.
+
+00:33:24.000 --> 00:33:26.000
+David Smith: Yep. Yep.
+
+00:33:24.000 --> 00:33:28.000
+Tasin Kazi: It's because of the work that we are doing.
+
+00:33:28.000 --> 00:33:35.000
+David Smith: Well, I think the goal is to just be able to penetrate into the ecosystem in as many different places as possible.
+
+00:33:28.000 --> 00:33:30.000
+Tasin Kazi: Sort of.
+
+00:33:34.000 --> 00:33:36.000
+Tasin Kazi: Absolutely.
+
+00:33:35.000 --> 00:33:47.000
+David Smith: Yeah. Okay, good. So Qazi Islam, do you have some ideas of where you might want to poke in onto this?
+
+00:33:47.000 --> 00:34:00.000
+Kazi Rahimu Islam: Uh, so, Professor, currently I'm engaged in, you know, mentoring and touch-basing with the other students, but I am more interested in the AI integration part. I think that is gonna be coming along a little after.
+
+00:33:52.000 --> 00:33:54.000
+David Smith: Yep.
+
+00:33:54.000 --> 00:34:00.000
+Tasin Kazi: I think that it's gonna be coming along a little after.
+
+00:33:55.000 --> 00:33:57.000
+David Smith: Right.
+
+00:34:00.000 --> 00:34:10.000
+David Smith: Yeah, I think so. OK. Yeah, so maybe what your job now is to find other students that might want to build a database or might want to — yeah.
+
+00:34:01.000 --> 00:34:03.000
+Kazi Rahimu Islam: Yeah, yeah.
+
+00:34:03.000 --> 00:34:04.000
+Kazi Rahimu Islam: Cool.
+
+00:34:08.000 --> 00:34:15.000
+Tasin Kazi: Yeah, yeah, yeah. That's what I'll be doing. I'll be bringing in more students and I'll be participating in them.
+
+00:34:09.000 --> 00:34:19.000
+Kazi Rahimu Islam: Yeah, yeah, yeah, I will be. That's what I will be doing. I know I will be bringing in more students, and I'll be touch basing with them on a weekly basis or bi weekly basis to see what they're up to. And yeah.
+
+00:34:12.000 --> 00:34:13.000
+David Smith: Okay.
+
+00:34:18.000 --> 00:34:36.000
+David Smith: Great, good, yeah. Yeah, I'm starting to feel sort of this critical mass happening where we're going to have to start turning people away, which is outside of the Qi methodology, I mean, philosophy, but at a certain point, we only have enough resources to do what we have to do.
+
+00:34:36.000 --> 00:34:52.000
+David Smith: But, um, it's all good. So, it seems to me, then, that if I'm looking at, you know, sort of the locations, Kazi Nomani, if you want to wrap your head around the class objects for the.
+
+00:34:52.000 --> 00:35:01.000
+David Smith: for the actual computational pathway. And Sunima, if you can evaluate what his sort of proposal is.
+
+00:35:02.000 --> 00:35:17.000
+David Smith: Um, in terms of whether that functions, um, but I would like to have relatively soon these basic, um, uh, classes defined in actual Python files able to be imported and deployed as sort of a library.
+
+00:35:18.000 --> 00:35:21.000
+David Smith: Does that sound reasonable?
+
+00:35:22.000 --> 00:35:23.000
+Sunima Dangol: Yep.
+
+00:35:23.000 --> 00:35:24.000
+David Smith: Okay.
+
+00:35:23.000 --> 00:35:32.000
+Kazi Rahimu Islam: Professor, I will need to drop in because our hackathon will be wrapping up at 4, so I'll be wrapping up my program.
+
+00:35:25.000 --> 00:35:26.000
+David Smith: Yes.
+
+00:35:30.000 --> 00:35:44.000
+David Smith: Oh, no, I'm wrapping up right now. So, I mean, I think we have some assignments. I'll sort of convert them into issues. I will take the summary and the transcript from here. I'll post it into the self-aware room, and we'll pick this up again.
+
+00:35:32.000 --> 00:35:33.000
+Kazi Rahimu Islam: All right.
+
+00:35:47.000 --> 00:35:50.000
+David Smith: Yeah, good luck at the hackathon. Have a great time.
+
+00:35:51.000 --> 00:35:56.000
+David Smith: Okay. Any other questions or are we good for now?
+
+00:35:56.000 --> 00:35:59.000
+Kazi Tamim Nomany: Nothing else, Professor. Thank you. For me.
+
+00:35:56.000 --> 00:35:58.000
+Sunima Dangol: I'm still…
+
+00:35:57.000 --> 00:35:59.000
+David Smith: Okay.
+
+00:35:58.000 --> 00:36:02.000
+Sunima Dangol: Uh, okay. I'm just working with audio, right?
+
+00:35:59.000 --> 00:36:00.000
+David Smith: Yes.
+
+00:36:02.000 --> 00:36:20.000
+David Smith: If you just, yeah, take a look at the mic, take a look at his, those issues 22, 23, 24. They still need to be, uh, what we want to do is, they're, they're currently proposals, we need to take a look at them and evaluate how they would fit into the, into the contractual stuff that we already have there that's more vague.
+
+00:36:03.000 --> 00:36:05.000
+Sunima Dangol: Okay.
+
+00:36:19.000 --> 00:36:21.000
+Sunima Dangol: Okay. Mm-hmm.
+
+00:36:20.000 --> 00:36:36.000
+David Smith: And what I want you to do is just test it based on the audio pipeline. Since you already have been thinking about that and working with it, you'll probably be able to identify, hey, this is ambiguous or we need another.
+
+00:36:36.000 --> 00:36:52.000
+David Smith: definition, or there are too many, there are too many different IDs, you know, which one, which is the one that's supposed to be used, and then we'll, we'll, we'll start to come up with how that works, and we'll probably want to build some constructors and things like that, but for now, it's just a test. Is that good?
+
+00:36:49.000 --> 00:36:51.000
+Sunima Dangol: Okay.
+
+00:36:51.000 --> 00:36:54.000
+Sunima Dangol: Yeah, sounds great.
+
+00:36:53.000 --> 00:37:00.000
+David Smith: Okay, thank you so much, good seeing you. I got to see you twice today, I got to see the real you and the virtual you.
+
+00:36:54.000 --> 00:36:57.000
+Sunima Dangol: Thank you so much, Professor.
+
+00:36:57.000 --> 00:36:59.000
+Sunima Dangol: Yeah. Okay.
+
+00:37:00.000 --> 00:37:02.000
+David Smith: Okay.
+
+00:37:02.000 --> 00:37:05.000
+David Smith: Take care. See you soon. Bye.
+
