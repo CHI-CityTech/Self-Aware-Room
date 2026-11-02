@@ -17,8 +17,8 @@ Validate the baseline physical data ingestion pipeline for the Self-Aware Room (
 ## 2. Hardware Preparation
 The BME680 breakout board was prepared by soldering the bottom header pins to allow flush mounting on a standard breadboard.
 
-![BME680 Front](IMG_6058.jpeg)
-![BME680 Back Pins](IMG_6057.jpeg)
+![BME680 Front](Images/IMG_6058.jpeg)
+![BME680 Back Pins](Images/IMG_6057.jpeg)
 
 ## 3. Wiring and Pinout Architecture
 The BME680 supports both I2C and SPI. For this architecture, I2C was selected. 
@@ -34,9 +34,9 @@ Initial wiring attempts incorrectly bridged the I2C data lines to the breadboard
 * **SCK** (BME680 SCL) -> **IO22** (ESP32)
 * **SDI** (BME680 SDA) -> **IO21** (ESP32)
 
-![ESP32 Pinout Back](IMG_6059.jpeg)
-![Breadboard Top Down](IMG_6063.jpeg)
-![Breadboard Angled](IMG_6067.jpeg)
+![ESP32 Pinout Back](Images/IMG_6059.jpeg)
+![Breadboard Top Down](Images/IMG_6063.jpeg)
+![Breadboard Angled](Images/IMG_6067.jpeg)
 
 ## 4. Workstation Configuration & Driver Troubleshooting
 Upon connecting the ESP32 via USB, the Arduino IDE failed to recognize the COM port.
@@ -137,4 +137,4 @@ void loop() {
 }
 ```
 
-![Arduino IDE Firmware Script](IMG_6068.jpeg)
+![Arduino IDE Firmware Script](Images/IMG_6068.jpeg)
