@@ -31,7 +31,7 @@ The repository contains two board versions:
 
 **Previous Stage References:**
 * [SAR_BOM_Environmental_Node_Stage_A_Breadboard_V1_2026-10-08.md](https://github.com/JabberBinKibria/Self-Aware-Room/blob/main/docs/sensors/SAR_BOM_Environmental_Node_Stage_A_Breadboard_V1_2026-10-08.md)
-* [SAR_Environmental_Node_Wired_Baseline_V1_2026-11-01.md](SAR_Environmental_Node_Wired_Baseline_V1_2026-11-01.md)
+* [SAR_Environmental_Node_Wired_Baseline_V1_2026-11-01.md](https://github.com/JabberBinKibria/Self-Aware-Room/blob/main/docs/sensors/Sar_Environmental_Node_Wired_Baseline_Validation.md)
 
 ## 3. Bill of Materials
 
