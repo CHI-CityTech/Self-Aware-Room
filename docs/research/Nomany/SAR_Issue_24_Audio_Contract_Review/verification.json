@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "assessment_date_local": "2026-10-28",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "mapping_rows": 24,
+  "findings": 10,
+  "audio_checklist_items": 8,
+  "fresh_probes_completed": 13,
+  "local_assessment_targets_checked": 3,
+  "pinned_github_source_targets": "checked against baseline Git blobs, including line anchors",
+  "markdown_table_columns": "consistent",
+  "html": "parsed, self-contained, no external scripts or images",
+  "embedded_csv_rows": [
+    8,
+    10,
+    24
+  ],
+  "embedded_class_reference_sha256": "b18fa52a72872c2ff4d7575545471437f33f5f927bc6a79a1ea5a2a52b3bc6cf",
+  "synthetic_raw_reference_checksum": "verified",
+  "class_design_status": "proposed, approval not established",
+  "runtime_source_changed": false,
+  "limits": [
+    "Synthetic sample values only. No microphone, gating signal processor, clock calibration, deletion engine, or deployed system was exercised.",
+    "StageStatus.OK describes scaffold behavior, not contract certification.",
+    "Gating/order context is explicitly a review assumption where noted.",
+    "Reference metadata remains in stored synthetic artifacts even when absent from the emitted payload.",
+    "Issue 23 diagrams and context/validator interfaces remain proposals."
+  ],
+  "local_commit": "d72b8eac9c5654e9a00466c4b83a9ec539e33feb",
+  "repository_files_changed": [
+    "docs/assets/issue24/audio_class_mapping.csv",
+    "docs/assets/issue24/audio_conformance_checklist.csv",
+    "docs/assets/issue24/audio_review_findings.csv",
+    "docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md",
+    "docs/computational/README.md",
+    "docs/computational/proposals/issue-24/SAR_Audio_Contract_Class_Alignment_Review_V1_2026-10-28.md"
+  ],
+  "runtime_source_diff": "empty",
+  "existing_audio_requirements": "preserved verbatim, assessment link appended",
+  "whitespace_check": "git diff --cached --check passed before commit",
+  "patch_recreates_committed_tree": true,
+  "issue22_then_issue23_then_issue24_patches_apply_together": true
+}

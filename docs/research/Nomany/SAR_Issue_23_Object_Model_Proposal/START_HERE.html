@@ -1,0 +1,1034 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SAR Issue 23: Object Abstraction and Interface Proposal</title><style>
+  :root{color-scheme:light}*{box-sizing:border-box}body{margin:0;color:#16202b;background:#fff;font:16px/1.65 Arial,Helvetica,sans-serif}
+  main{max-width:1200px;margin:40px auto;padding:0 32px 64px}h1{font-size:32px;line-height:1.2;margin:0 0 24px}h2{font-size:24px;margin:40px 0 14px;border-top:1px solid #d8dee6;padding-top:20px}h3{font-size:19px;margin-top:28px}
+  a{color:#174a79;text-decoration:underline}p{margin:12px 0}table{border-collapse:collapse;width:100%;font-size:14px;margin:18px 0;display:table}th,td{border:1px solid #cbd3dd;padding:9px 11px;text-align:left;vertical-align:top}th{background:#edf2f7}
+  code{font:0.9em/1.5 ui-monospace,Menlo,Consolas,monospace;background:#f1f4f7;padding:1px 3px}pre{background:#f1f4f7;border:1px solid #d9e0e8;padding:18px;overflow:auto;white-space:pre}pre code{padding:0;background:none}
+  figure{margin:24px 0 34px;overflow:auto}figure svg{width:100%;height:auto;min-width:700px}figcaption{font-size:13px;margin:8px 0;color:#4b5969}li{margin:5px 0}
+  @media(max-width:750px){main{padding:0 16px}table{display:block;overflow:auto}h1{font-size:27px}}@media print{main{max-width:none;margin:0;padding:0}h2{break-after:avoid}figure{break-inside:avoid}a{color:inherit}figcaption{display:none}}
+  </style></head><body><main><h1>SAR Object Abstraction and Interface Proposal</h1>
+<p>Status: Proposed for assessment, not approved or implemented</p>
+<p>Version: 1. Date: 2026-10-28</p>
+<p>Prepared for: Kazi Tamim Nomany, with AI assistance</p>
+<p>Issue: <a href="https://github.com/CHI-CityTech/Self-Aware-Room/issues/23">SAR #23</a></p>
+<p>Related specification: D02.01. This companion proposal does not allocate a new canonical Doc-ID.</p>
+<p>Repository baseline: <code>8c99abecd723a39370455ba9e27adca2cea872b1</code></p>
+<h2>1. Recommendation in plain terms</h2>
+<p>Keep one small abstract base for the information every SAR data object carries. Keep the ten existing concrete object categories as direct subclasses. Put source-specific and modality-specific requirements in profiles and validators. Use interfaces for interchangeable processing stages, telemetry, storage, and adapters. Keep the existing stage ABC for shared processing helpers.</p>
+<p>Here, global means common to all SAR data-object instances. It does not mean one shared Python global variable, one value reused by all objects, or a singleton base object. Each observation, event, or decision keeps its own identity and metadata.</p>
+<p>This proposal defines the abstract class, classifies current fields and methods, compares inheritance with interfaces, and supplies five assessable UML class views. No runtime files, live inventory records, or task statuses are changed. The diagrams show proposed design boundaries and explicitly label new interfaces and context extensions.</p>
+<h2>2. Baseline findings</h2>
+<p>The current <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/models.py">models module</a> already defines <code>DataObject</code> and ten direct subclasses. <code>DataObject</code> rejects direct construction using a <code>__post_init__</code> guard, but it does not inherit Python <code>ABC</code> and has no abstract method. A subclass that does not override that hook can therefore bypass the intended abstraction boundary.</p>
+<p>The current <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/stages.py">stage contracts</a> already use <code>StageComponent(ABC)</code> with abstract <code>accept_input</code> and <code>process</code> methods. <code>TelemetryEmitter</code>, <code>RawStore</code>, and <code>LogSink</code> already use Python <code>Protocol</code>. This proposal preserves these choices rather than presenting them as new implementations.</p>
+<p>D01.02 section 7 defines streaming conformance through field shape and semantics. D02.01 sections 2.2, 3.4, and 6.1 prefer composition, distinguish processing components from data artifacts, and describe modality profiles. These repository rules support shallow data inheritance plus capability interfaces.</p>
+<h2>3. Common fields on the abstract data object</h2>
+<table>
+<thead>
+<tr>
+<th>Existing field</th>
+<th>Type</th>
+<th>Why common</th>
+<th>Proposed rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>object_type</code></td>
+<td><code>ObjectType</code></td>
+<td>Identifies the contract category</td>
+<td>Fixed by the concrete subtype, not freely supplied to its constructor. Validate category/type consistency.</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td><code>str</code></td>
+<td>Identifies this particular data object</td>
+<td>New ID for each newly emitted derived object. Preserve lineage to parents.</td>
+</tr>
+<tr>
+<td><code>trace_id</code></td>
+<td><code>str</code> or null</td>
+<td>Correlates related processing activity</td>
+<td>Preserve through derivation where applicable. Not a replacement for object, run, or session identity.</td>
+</tr>
+<tr>
+<td><code>quality_status</code></td>
+<td><code>str</code> or null</td>
+<td>Describes evidence quality</td>
+<td>Keep the field common. Allowed values and requiredness need contract review.</td>
+</tr>
+<tr>
+<td><code>error_status</code></td>
+<td><code>str</code> or null</td>
+<td>Describes an object-level error</td>
+<td>Distinguish from stage status and log severity.</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>Dictionary</td>
+<td>Carries values or raw-data references</td>
+<td>Common container, subtype/profile-specific contents. Do not require audio keys on every object.</td>
+</tr>
+<tr>
+<td><code>provenance</code></td>
+<td><code>Provenance</code></td>
+<td>Records origin and parent linkage</td>
+<td>Compose a metadata value object. Do not inherit from Provenance.</td>
+</tr>
+<tr>
+<td><code>time_context</code></td>
+<td><code>TimeContext</code></td>
+<td>Records relevant timing and clock information</td>
+<td>Compose a metadata value object. Required timestamps depend on boundary and object role.</td>
+</tr>
+</tbody></table>
+<p>These are the eight fields currently declared on <code>DataObject</code>. Their presence does not imply that optional fields must contain values on every object. Type annotations and dataclass defaults do not validate wire data or enforce contract semantics.</p>
+<p>Use per-instance default factories for dictionaries, lists, provenance, and timing. Do not use a shared mutable default or a class-level collection. Current defaults already use factories. Explicitly reusing a metadata instance can still create aliasing, so a later emission policy should copy or otherwise isolate mutable metadata.</p>
+<h2>4. Common metadata by composition</h2>
+<h3>4.1 Provenance</h3>
+<p>Keep the five current fields together: <code>parent_object_ids</code>, <code>source_native_id</code>, <code>created_by_component</code>, <code>component_version</code>, and <code>configuration_version</code>.</p>
+<p><code>parent_object_ids</code> links derived records to prior records. Native frame identity identifies source evidence and does not replace the canonical SAR object ID. D01.02 requires an object ID on emitted observations even when the source provides a native ID. D02.01 section 4.3 needs its conditional native-ID wording reconciled with this requirement.</p>
+<p>Generated-ID and estimated-time origin markers are a candidate provenance extension, not existing fields. Review their exact names and transport placement through T02/T03/T06. Issue 22&#39;s UID proposal is related work, not an approved dependency of this proposal.</p>
+<h3>4.2 TimeContext</h3>
+<p>Keep all ten existing fields in <code>TimeContext</code>: <code>source_capture_time</code>, <code>receipt_time</code>, <code>processing_time</code>, <code>valid_from</code>, <code>valid_until</code>, <code>dispatch_time</code>, <code>completion_time</code>, <code>clock_offset_estimate</code>, <code>clock_quality</code>, and <code>sync_source</code>.</p>
+<p>L1 receipt and processing timestamps follow D01.02. A dispatch completion timestamp is not required on a raw observation. Do not invent source capture time without recording its estimated origin. Preserve source capture, receipt, and processing time as distinct meanings.</p>
+<h3>4.3 Run and session context</h3>
+<p>D01.04 requires run/session grouping, but the current <code>DataObject</code>, <code>TimeContext</code>, and <code>LogRecord</code> do not declare <code>run_id</code> or <code>session_id</code>. Do not claim that trace IDs already implement that policy.</p>
+<p>Recommended future extension: an immutable <code>ExecutionContext(session_id, run_id)</code> associated with emitted objects and corresponding telemetry, or an equivalent approved serialized representation. Shared immutable context may be referenced by many objects. It is an association, not private composition. The diagram shows an optional reference during migration. Approval must decide when it becomes required, including how overlapping runs represent one source frame in several run associations. This proposal adds no such field to production code.</p>
+<h2>5. Fields and methods that belong to concrete subtypes</h2>
+<p>Keep these ten classes as direct children of <code>DataObject</code>. Semantic State is a separate contract category, not automatically a subclass of State. EvaluationRecord is a data artifact, not the O1 observer component or its LogRecord.</p>
+<table>
+<thead>
+<tr>
+<th>Existing subtype</th>
+<th>Fields declared by subtype</th>
+<th>Existing subtype methods</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Observation</code></td>
+<td><code>source_id</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>Event</code></td>
+<td><code>event_type</code>, <code>room_entity_id</code>, <code>observation_ids</code></td>
+<td><code>__post_init__</code>, <code>add_observation_id</code>, <code>add_observation_ids</code></td>
+</tr>
+<tr>
+<td><code>Entity</code></td>
+<td><code>entity_type</code>, <code>room_entity_id</code>, <code>is_canonical_room</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>State</code></td>
+<td><code>state_scope</code>, <code>room_entity_id</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>SemanticState</code></td>
+<td><code>semantic_label</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>Decision</code></td>
+<td><code>policy_result</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>Intent</code></td>
+<td><code>intent_name</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>ExecutionPlan</code></td>
+<td><code>steps</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>Dispatch</code></td>
+<td><code>channel</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+<tr>
+<td><code>EvaluationRecord</code></td>
+<td><code>metric_name</code></td>
+<td><code>__post_init__</code></td>
+</tr>
+</tbody></table>
+<p>The table covers every annotated subtype field in the baseline. All subclasses also inherit the eight common fields. The attached <a href="data:text/csv;base64,b3duZXIsZmllbGQsdHlwZSxjbGFzc2lmaWNhdGlvbixzb3VyY2VfcGF0aCxzb3VyY2VfbGluZQpEYXRhT2JqZWN0LG9iamVjdF90eXBlLE9iamVjdFR5cGUsY29tbW9uIHBlci1pbnN0YW5jZSBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSw0OApEYXRhT2JqZWN0LG9iamVjdF9pZCxzdHIsY29tbW9uIHBlci1pbnN0YW5jZSBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSw0OQpEYXRhT2JqZWN0LHRyYWNlX2lkLHN0ciB8IE5vbmUsY29tbW9uIHBlci1pbnN0YW5jZSBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSw1MApEYXRhT2JqZWN0LHF1YWxpdHlfc3RhdHVzLHN0ciB8IE5vbmUsY29tbW9uIHBlci1pbnN0YW5jZSBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSw1MQpEYXRhT2JqZWN0LGVycm9yX3N0YXR1cyxzdHIgfCBOb25lLGNvbW1vbiBwZXItaW5zdGFuY2UgY29udHJhY3Qsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9tb2RlbHMucHksNTIKRGF0YU9iamVjdCxwYXlsb2FkLCJkaWN0W3N0ciwgQW55XSIsY29tbW9uIHBlci1pbnN0YW5jZSBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSw1MwpEYXRhT2JqZWN0LHByb3ZlbmFuY2UsUHJvdmVuYW5jZSxjb21tb24gcGVyLWluc3RhbmNlIGNvbnRyYWN0LHNyYy9zYXJfY29yZS9jb250cmFjdHMvbW9kZWxzLnB5LDU0CkRhdGFPYmplY3QsdGltZV9jb250ZXh0LFRpbWVDb250ZXh0LGNvbW1vbiBwZXItaW5zdGFuY2UgY29udHJhY3Qsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9tb2RlbHMucHksNTUKT2JzZXJ2YXRpb24sc291cmNlX2lkLHN0cixzdWJ0eXBlLXNwZWNpZmljIGNvbnRyYWN0LHNyYy9zYXJfY29yZS9jb250cmFjdHMvbW9kZWxzLnB5LDcwCkV2ZW50LGV2ZW50X3R5cGUsc3RyIHwgTm9uZSxzdWJ0eXBlLXNwZWNpZmljIGNvbnRyYWN0LHNyYy9zYXJfY29yZS9jb250cmFjdHMvbW9kZWxzLnB5LDk0CkV2ZW50LHJvb21fZW50aXR5X2lkLHN0ciB8IE5vbmUsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSw5NQpFdmVudCxvYnNlcnZhdGlvbl9pZHMsbGlzdFtzdHJdLHN1YnR5cGUtc3BlY2lmaWMgY29udHJhY3Qsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9tb2RlbHMucHksOTYKRW50aXR5LGVudGl0eV90eXBlLHN0ciB8IE5vbmUsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSwxMjcKRW50aXR5LHJvb21fZW50aXR5X2lkLHN0ciB8IE5vbmUsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSwxMjgKRW50aXR5LGlzX2Nhbm9uaWNhbF9yb29tLGJvb2wsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSwxMjkKU3RhdGUsc3RhdGVfc2NvcGUsc3RyIHwgTm9uZSxzdWJ0eXBlLXNwZWNpZmljIGNvbnRyYWN0LHNyYy9zYXJfY29yZS9jb250cmFjdHMvbW9kZWxzLnB5LDE0MApTdGF0ZSxyb29tX2VudGl0eV9pZCxzdHIgfCBOb25lLHN1YnR5cGUtc3BlY2lmaWMgY29udHJhY3Qsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9tb2RlbHMucHksMTQxClNlbWFudGljU3RhdGUsc2VtYW50aWNfbGFiZWwsc3RyIHwgTm9uZSxzdWJ0eXBlLXNwZWNpZmljIGNvbnRyYWN0LHNyYy9zYXJfY29yZS9jb250cmFjdHMvbW9kZWxzLnB5LDE1MgpEZWNpc2lvbixwb2xpY3lfcmVzdWx0LHN0ciB8IE5vbmUsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSwxNjMKSW50ZW50LGludGVudF9uYW1lLHN0ciB8IE5vbmUsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSwxNzQKRXhlY3V0aW9uUGxhbixzdGVwcywibGlzdFtkaWN0W3N0ciwgQW55XV0iLHN1YnR5cGUtc3BlY2lmaWMgY29udHJhY3Qsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9tb2RlbHMucHksMTg1CkRpc3BhdGNoLGNoYW5uZWwsc3RyIHwgTm9uZSxzdWJ0eXBlLXNwZWNpZmljIGNvbnRyYWN0LHNyYy9zYXJfY29yZS9jb250cmFjdHMvbW9kZWxzLnB5LDE5NgpFdmFsdWF0aW9uUmVjb3JkLG1ldHJpY19uYW1lLHN0ciB8IE5vbmUsc3VidHlwZS1zcGVjaWZpYyBjb250cmFjdCxzcmMvc2FyX2NvcmUvY29udHJhY3RzL21vZGVscy5weSwyMDcKUHJvdmVuYW5jZSxwYXJlbnRfb2JqZWN0X2lkcyxsaXN0W3N0cl0sY29tcG9zZWQgY29tbW9uIG1ldGFkYXRhLHNyYy9zYXJfY29yZS9jb250cmFjdHMvaWRlbnRpdHkucHksMjgKUHJvdmVuYW5jZSxzb3VyY2VfbmF0aXZlX2lkLHN0ciB8IE5vbmUsY29tcG9zZWQgY29tbW9uIG1ldGFkYXRhLHNyYy9zYXJfY29yZS9jb250cmFjdHMvaWRlbnRpdHkucHksMjkKUHJvdmVuYW5jZSxjcmVhdGVkX2J5X2NvbXBvbmVudCxzdHIgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL2lkZW50aXR5LnB5LDMwClByb3ZlbmFuY2UsY29tcG9uZW50X3ZlcnNpb24sc3RyIHwgTm9uZSxjb21wb3NlZCBjb21tb24gbWV0YWRhdGEsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9pZGVudGl0eS5weSwzMQpQcm92ZW5hbmNlLGNvbmZpZ3VyYXRpb25fdmVyc2lvbixzdHIgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL2lkZW50aXR5LnB5LDMyClRpbWVDb250ZXh0LHNvdXJjZV9jYXB0dXJlX3RpbWUsZGF0ZXRpbWUgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL3RpbWluZy5weSwxMwpUaW1lQ29udGV4dCxyZWNlaXB0X3RpbWUsZGF0ZXRpbWUgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL3RpbWluZy5weSwxNApUaW1lQ29udGV4dCxwcm9jZXNzaW5nX3RpbWUsZGF0ZXRpbWUgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL3RpbWluZy5weSwxNQpUaW1lQ29udGV4dCx2YWxpZF9mcm9tLGRhdGV0aW1lIHwgTm9uZSxjb21wb3NlZCBjb21tb24gbWV0YWRhdGEsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy90aW1pbmcucHksMTYKVGltZUNvbnRleHQsdmFsaWRfdW50aWwsZGF0ZXRpbWUgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL3RpbWluZy5weSwxNwpUaW1lQ29udGV4dCxkaXNwYXRjaF90aW1lLGRhdGV0aW1lIHwgTm9uZSxjb21wb3NlZCBjb21tb24gbWV0YWRhdGEsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy90aW1pbmcucHksMTgKVGltZUNvbnRleHQsY29tcGxldGlvbl90aW1lLGRhdGV0aW1lIHwgTm9uZSxjb21wb3NlZCBjb21tb24gbWV0YWRhdGEsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy90aW1pbmcucHksMTkKVGltZUNvbnRleHQsY2xvY2tfb2Zmc2V0X2VzdGltYXRlLGZsb2F0IHwgTm9uZSxjb21wb3NlZCBjb21tb24gbWV0YWRhdGEsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy90aW1pbmcucHksMjAKVGltZUNvbnRleHQsY2xvY2tfcXVhbGl0eSxzdHIgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL3RpbWluZy5weSwyMQpUaW1lQ29udGV4dCxzeW5jX3NvdXJjZSxzdHIgfCBOb25lLGNvbXBvc2VkIGNvbW1vbiBtZXRhZGF0YSxzcmMvc2FyX2NvcmUvY29udHJhY3RzL3RpbWluZy5weSwyMgpTdGFnZVJlc3VsdCxvdXRwdXRfb2JqZWN0cyxsaXN0W0RhdGFPYmplY3RdLHN0YWdlIHJlc3VsdCB3cmFwcGVyLHNyYy9zYXJfY29yZS9jb250cmFjdHMvc3RhZ2VzLnB5LDI0ClN0YWdlUmVzdWx0LHN0YXR1cyxTdGFnZVN0YXR1cyxzdGFnZSByZXN1bHQgd3JhcHBlcixzcmMvc2FyX2NvcmUvY29udHJhY3RzL3N0YWdlcy5weSwyNQpTdGFnZVJlc3VsdCxtZXNzYWdlcyxsaXN0W3N0cl0sc3RhZ2UgcmVzdWx0IHdyYXBwZXIsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9zdGFnZXMucHksMjYKU3RhZ2VDb21wb25lbnQsc3RhZ2VfbmFtZSxzdHIsInByb2Nlc3NpbmcgY29tcG9uZW50LCBub3QgRGF0YU9iamVjdCIsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9zdGFnZXMucHksNDIKU3RhZ2VDb21wb25lbnQsdGVsZW1ldHJ5LFRlbGVtZXRyeUVtaXR0ZXIgfCBOb25lLCJwcm9jZXNzaW5nIGNvbXBvbmVudCwgbm90IERhdGFPYmplY3QiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvc3RhZ2VzLnB5LDQzCkVkZ2VPYnNlcnZhdGlvbkZyYW1lLHNvdXJjZV9ub2RlX2lkLHN0ciwiZWRnZSB0cmFuc3BvcnQsIG5vdCBEYXRhT2JqZWN0IGJhc2UiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvZWRnZV9pbmdyZXNzLnB5LDIyCkVkZ2VPYnNlcnZhdGlvbkZyYW1lLHNvdXJjZV9pZCxzdHIsImVkZ2UgdHJhbnNwb3J0LCBub3QgRGF0YU9iamVjdCBiYXNlIixzcmMvc2FyX2NvcmUvY29udHJhY3RzL2VkZ2VfaW5ncmVzcy5weSwyMwpFZGdlT2JzZXJ2YXRpb25GcmFtZSxtb2RhbGl0eSxzdHIsImVkZ2UgdHJhbnNwb3J0LCBub3QgRGF0YU9iamVjdCBiYXNlIixzcmMvc2FyX2NvcmUvY29udHJhY3RzL2VkZ2VfaW5ncmVzcy5weSwyNApFZGdlT2JzZXJ2YXRpb25GcmFtZSxlbmNvZGluZyxzdHIsImVkZ2UgdHJhbnNwb3J0LCBub3QgRGF0YU9iamVjdCBiYXNlIixzcmMvc2FyX2NvcmUvY29udHJhY3RzL2VkZ2VfaW5ncmVzcy5weSwyNQpFZGdlT2JzZXJ2YXRpb25GcmFtZSxzYW1wbGVfcmF0ZV9oeixpbnQsImVkZ2UgdHJhbnNwb3J0LCBub3QgRGF0YU9iamVjdCBiYXNlIixzcmMvc2FyX2NvcmUvY29udHJhY3RzL2VkZ2VfaW5ncmVzcy5weSwyNgpFZGdlT2JzZXJ2YXRpb25GcmFtZSxjaGFubmVsX2NvdW50LGludCwiZWRnZSB0cmFuc3BvcnQsIG5vdCBEYXRhT2JqZWN0IGJhc2UiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvZWRnZV9pbmdyZXNzLnB5LDI3CkVkZ2VPYnNlcnZhdGlvbkZyYW1lLGZyYW1lX2luZGV4LGludCwiZWRnZSB0cmFuc3BvcnQsIG5vdCBEYXRhT2JqZWN0IGJhc2UiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvZWRnZV9pbmdyZXNzLnB5LDI4CkVkZ2VPYnNlcnZhdGlvbkZyYW1lLHBheWxvYWQsImRpY3Rbc3RyLCBBbnldIiwiZWRnZSB0cmFuc3BvcnQsIG5vdCBEYXRhT2JqZWN0IGJhc2UiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvZWRnZV9pbmdyZXNzLnB5LDI5CkVkZ2VPYnNlcnZhdGlvbkZyYW1lLHNvdXJjZV9jYXB0dXJlX3RpbWUsZGF0ZXRpbWUgfCBOb25lLCJlZGdlIHRyYW5zcG9ydCwgbm90IERhdGFPYmplY3QgYmFzZSIsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9lZGdlX2luZ3Jlc3MucHksMzAKRWRnZU9ic2VydmF0aW9uRnJhbWUsc291cmNlX2ZyYW1lX2lkLHN0ciB8IE5vbmUsImVkZ2UgdHJhbnNwb3J0LCBub3QgRGF0YU9iamVjdCBiYXNlIixzcmMvc2FyX2NvcmUvY29udHJhY3RzL2VkZ2VfaW5ncmVzcy5weSwzMQpFZGdlT2JzZXJ2YXRpb25GcmFtZSxzb3VyY2VfbGF0ZW5jeV9tcyxmbG9hdCB8IE5vbmUsImVkZ2UgdHJhbnNwb3J0LCBub3QgRGF0YU9iamVjdCBiYXNlIixzcmMvc2FyX2NvcmUvY29udHJhY3RzL2VkZ2VfaW5ncmVzcy5weSwzMgpMb2dSZWNvcmQsc3RhZ2VfbmFtZSxzdHIsIm9wZXJhdGlvbmFsIHRlbGVtZXRyeSwgbm90IERhdGFPYmplY3QiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvb2JzZXJ2YWJpbGl0eS5weSwyNgpMb2dSZWNvcmQscmVjb3JkX3R5cGUsc3RyLCJvcGVyYXRpb25hbCB0ZWxlbWV0cnksIG5vdCBEYXRhT2JqZWN0IixzcmMvc2FyX2NvcmUvY29udHJhY3RzL29ic2VydmFiaWxpdHkucHksMjcKTG9nUmVjb3JkLG1lc3NhZ2Usc3RyLCJvcGVyYXRpb25hbCB0ZWxlbWV0cnksIG5vdCBEYXRhT2JqZWN0IixzcmMvc2FyX2NvcmUvY29udHJhY3RzL29ic2VydmFiaWxpdHkucHksMjgKTG9nUmVjb3JkLGxldmVsLExvZ0xldmVsLCJvcGVyYXRpb25hbCB0ZWxlbWV0cnksIG5vdCBEYXRhT2JqZWN0IixzcmMvc2FyX2NvcmUvY29udHJhY3RzL29ic2VydmFiaWxpdHkucHksMjkKTG9nUmVjb3JkLHRpbWVzdGFtcF91dGMsZGF0ZXRpbWUsIm9wZXJhdGlvbmFsIHRlbGVtZXRyeSwgbm90IERhdGFPYmplY3QiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvb2JzZXJ2YWJpbGl0eS5weSwzMApMb2dSZWNvcmQsdHJhY2VfaWQsc3RyIHwgTm9uZSwib3BlcmF0aW9uYWwgdGVsZW1ldHJ5LCBub3QgRGF0YU9iamVjdCIsc3JjL3Nhcl9jb3JlL2NvbnRyYWN0cy9vYnNlcnZhYmlsaXR5LnB5LDMxCkxvZ1JlY29yZCxwYXlsb2FkLCJkaWN0W3N0ciwgQW55XSIsIm9wZXJhdGlvbmFsIHRlbGVtZXRyeSwgbm90IERhdGFPYmplY3QiLHNyYy9zYXJfY29yZS9jb250cmFjdHMvb2JzZXJ2YWJpbGl0eS5weSwzMgpSYXdSZWZlcmVuY2UscmF3X3JlZl91cmksc3RyLHJhdyBldmlkZW5jZSByZWZlcmVuY2UgdmFsdWUgb2JqZWN0LHNyYy9zYXJfY29yZS9zdG9yYWdlL3Jhd19zdG9yZS5weSwxOQpSYXdSZWZlcmVuY2UsY2hlY2tzdW1fc2hhMjU2LHN0cixyYXcgZXZpZGVuY2UgcmVmZXJlbmNlIHZhbHVlIG9iamVjdCxzcmMvc2FyX2NvcmUvc3RvcmFnZS9yYXdfc3RvcmUucHksMjAKUmF3UmVmZXJlbmNlLG1lZGlhX3R5cGUsc3RyLHJhdyBldmlkZW5jZSByZWZlcmVuY2UgdmFsdWUgb2JqZWN0LHNyYy9zYXJfY29yZS9zdG9yYWdlL3Jhd19zdG9yZS5weSwyMQpSYXdSZWZlcmVuY2UsYnl0ZV9zaXplLGludCxyYXcgZXZpZGVuY2UgcmVmZXJlbmNlIHZhbHVlIG9iamVjdCxzcmMvc2FyX2NvcmUvc3RvcmFnZS9yYXdfc3RvcmUucHksMjIK" download="field_inventory.csv">field inventory</a> records declared types and exact source lines across the inspected contract/support modules.</p>
+<p>Keep <code>source_id</code> on Observation. A correlated Event may use several observations, so a single-source field should not become mandatory on all objects. Keep <code>room_entity_id</code> on its existing Event, Entity, and State types until another category has a reviewed requirement for that relationship.</p>
+<p><code>Event.add_observation_id</code> and <code>add_observation_ids</code> stay on Event. They keep observation IDs aligned with parent provenance. A generic Dispatch or Intent should not inherit event-aggregation methods.</p>
+<p><code>create_canonical_room_entity</code> remains a module-level factory for Entity. The current factory creates objects with room flags and identifiers. It does not enforce a process-wide singleton. <code>generate_object_id</code> and <code>utc_now</code> remain reusable module-level factories, not mutable global values or new base-object methods.</p>
+<h2>6. Define the abstract class</h2>
+<p>An abstract data class defines shared state and the minimum construction hook that a concrete category must implement. It cannot itself be emitted as a complete SAR artifact.</p>
+<p>Recommended minimal formalization: retain the existing dataclass fields and construction behavior, inherit <code>ABC</code>, and mark <code>__post_init__</code> abstract. Every existing concrete category already overrides that hook. Keep its category assignment in the subtype. Do not add acquisition, processing, storage, or dispatch behavior to DataObject.</p>
+<p>This is an illustrative definition for review, not an applied runtime change:</p>
+<pre><code class="language-python">from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Any
+from sar_core.contracts.identity import Provenance, generate_object_id
+from sar_core.contracts.models import ObjectType
+from sar_core.contracts.timing import TimeContext
+
+@dataclass(slots=True)
+class DataObject(ABC):
+    object_type: ObjectType = field(init=False, default=ObjectType.OBSERVATION)
+    object_id: str = field(default_factory=generate_object_id)
+    trace_id: str | None = None
+    quality_status: str | None = None
+    error_status: str | None = None
+    payload: dict[str, Any] = field(default_factory=dict)
+    provenance: Provenance = field(default_factory=Provenance)
+    time_context: TimeContext = field(default_factory=TimeContext)
+
+    @abstractmethod
+    def __post_init__(self) -&gt; None:
+        &quot;&quot;&quot;Concrete types fix object_type and maintain local invariants.&quot;&quot;&quot;
+
+@dataclass(slots=True)
+class Observation(DataObject):
+    source_id: str = &quot;&quot;
+
+    def __post_init__(self) -&gt; None:
+        DataObject.__post_init__(self)
+        self.object_type = ObjectType.OBSERVATION
+</code></pre>
+<p>In a later implementation, modify the real models module rather than importing ObjectType from that module into itself. The imports above make the example executable as a separate review module. An empty source ID is retained to show baseline compatibility, not endorsement of an empty ID as a valid observation.</p>
+<p>The abstract hook prevents constructing the base or an incomplete direct child. It does not make instances immutable, prevent later tag mutation, validate profiles, or prove semantic correctness. Separate validators should check invariants, and regression checks should cover all ten concrete categories before adoption.</p>
+<h2>7. Inheritance, interface, or composition?</h2>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Recommended mechanism</th>
+<th>Reason and boundary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Observation, Event, Entity, State, SemanticState, Decision, Intent, ExecutionPlan, Dispatch, EvaluationRecord</td>
+<td>Shallow inheritance from DataObject</td>
+<td>Each is a SAR data object with the same common state. Keep category-specific fields local.</td>
+</tr>
+<tr>
+<td>Timing and provenance</td>
+<td>Composition</td>
+<td>An object has metadata. Metadata is not another kind of observation.</td>
+</tr>
+<tr>
+<td>Shared construction defaults</td>
+<td>DataObject dataclass plus abstract hook</td>
+<td>Reuse identity/default allocation, without attaching processing capabilities.</td>
+</tr>
+<tr>
+<td>Built-in processing stages</td>
+<td>Existing StageComponent ABC</td>
+<td>Reuse stage name, telemetry reference, and emission helpers. Override accept_input/process.</td>
+</tr>
+<tr>
+<td>Pipeline substitution boundary</td>
+<td>Proposed Stage Protocol</td>
+<td>An alternate stage can provide the required signatures without inheriting SAR&#39;s helper implementation. Type stage slots against this interface after review.</td>
+</tr>
+<tr>
+<td>TelemetryEmitter, RawStore, LogSink</td>
+<td>Existing Protocol interfaces</td>
+<td>Preserve replaceable capabilities with explicit method signatures. No DataObject inheritance.</td>
+</tr>
+<tr>
+<td>Ingress adaptation</td>
+<td>Proposed IngressAdapter Protocol</td>
+<td>Adapts an edge frame to Observation. It is a processing capability, not a data subclass.</td>
+</tr>
+<tr>
+<td>Shared/profile checks</td>
+<td>Proposed validator interfaces and composed implementations</td>
+<td>Apply common checks plus the declared modality&#39;s registered profile.</td>
+</tr>
+<tr>
+<td>Audio, video, depth, and IMU details</td>
+<td>Profile metadata and validation</td>
+<td>Avoid AudioObservation-to-VideoObservation inheritance chains and modality methods on DataObject.</td>
+</tr>
+<tr>
+<td>Serialization and raw evidence storage</td>
+<td>Separate codec/store helpers</td>
+<td>Storage and transport behavior should not spread across every data subtype.</td>
+</tr>
+</tbody></table>
+<p>For the proposed Stage interface, retain the current signatures: <code>accept_input(input_objects: list[DataObject]) -&gt; bool</code> and <code>process(input_objects: list[DataObject]) -&gt; StageResult</code>. Structural substitutability includes compatible parameter and return types, not merely matching method names. Static typing does not enforce profile validity or lifecycle semantics at runtime.</p>
+<p>Keep <code>StageResult.output_objects</code>, <code>status</code>, and <code>messages</code> in a result wrapper. Do not turn StageResult into a DataObject merely because it holds data objects. Keep operational component metadata, such as stage name, node identity, configuration, uptime, and heartbeat, on components or telemetry. Copy applicable creator/version information into object provenance on emission.</p>
+<p>Keep <code>LogRecord</code> separate from <code>EvaluationRecord</code>: the former is an operational logging DTO, while the latter is an existing SAR artifact category. Keep stage <code>StageStatus</code>, object quality/error strings, and log <code>LogLevel</code> distinct until explicit mappings are specified.</p>
+<h2>8. Modality boundary and proposed signatures</h2>
+<p>The general frame should carry D01.02&#39;s five base fields. Its modality profile supplies additional requirements. The current <code>EdgeObservationFrame</code> requires <code>encoding</code>, <code>sample_rate_hz</code>, and <code>channel_count</code> even for other modalities. That is a known gap, not the recommended abstract-object design.</p>
+<p>Recommended new interfaces for assessment:</p>
+<table>
+<thead>
+<tr>
+<th>Proposed capability</th>
+<th>Signature</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ContractValidator</code></td>
+<td><code>validate(frame: EdgeFrame) -&gt; ValidationResult</code></td>
+<td>Shared plus selected profile validation before emission</td>
+</tr>
+<tr>
+<td><code>ProfileValidator</code></td>
+<td><code>validate(frame: EdgeFrame) -&gt; ValidationResult</code></td>
+<td>Requirements for the selected modality/profile</td>
+</tr>
+<tr>
+<td><code>IngressAdapter</code></td>
+<td><code>adapt(frame: EdgeFrame) -&gt; Observation</code></td>
+<td>A validated source frame becomes a SAR observation</td>
+</tr>
+</tbody></table>
+<p>Proposed <code>ValidationResult</code> contains <code>valid: bool</code> and structured issues identifying field, rule, and message. An adapter must not emit an ordinary valid Observation after a failed result. Error reporting, exceptions versus structured failure returns, schema versions, and any degraded path require contract review.</p>
+<p><code>FrameValidator</code> would combine shared-envelope checks with a profile registry keyed by modality and approved profile version. Unknown or unavailable profiles must fail or produce an explicitly approved degraded result. Register audio first against D01.02.01. Video/depth/IMU/control profiles remain planned, not implemented or approved by this proposal.</p>
+<p>For audio, require encoding, sample rate, channel count, and sample format or bit depth as the profile specifies. Require explicit bit depth when encoding/sample format leaves numeric precision ambiguous. Do not move these fields into DataObject or invent sample-rate values for non-audio inputs. A successful demo path does not establish full shared/profile conformance.</p>
+<h2>9. UML class diagram set</h2>
+<p>Solid lines ending in a hollow triangle indicate inheritance. Dashed lines ending in a hollow triangle indicate interface realization. Filled diamonds indicate proposed ownership of per-object metadata. Other labeled lines are references or dependencies. Parameter names in diagrams are abbreviated. Sections 6 through 8 and the source inventory carry the precise signatures/types.</p>
+<p>All five views belong to the same proposed design. Existing and new types are labeled. The two hierarchy views repeat DataObject only to keep each view readable. They do not create two base classes. Diagram 05&#39;s generalized EdgeFrame and validator types are proposed, not existing runtime implementations.</p>
+<h3>9.1 Shared contract and metadata</h3>
+<figure><svg width="736pt" height="461pt"
+ viewBox="0.00 0.00 736.00 461.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 442.8)">
+<title>SAR</title>
+<polygon fill="white" stroke="none" points="-18,18 -18,-442.8 718.45,-442.8 718.45,18 -18,18"/>
+<text xml:space="preserve" text-anchor="middle" x="350.22" y="-404.6" font-family="Helvetica,sans-Serif" font-size="18.00">01 Shared data contract and composed metadata | proposed design</text>
+<!-- DataObject -->
+<g id="node1" class="node">
+<title>DataObject</title>
+<polygon fill="#edf2f7" stroke="none" points="255.35,-357.2 255.35,-395.2 459.62,-395.2 459.62,-357.2 255.35,-357.2"/>
+<polygon fill="none" stroke="black" points="255.35,-357.2 255.35,-395.2 459.62,-395.2 459.62,-357.2 255.35,-357.2"/>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-378.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;abstract, formal ABC proposed&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="328.45" y="-367.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">DataObject</text>
+<polygon fill="none" stroke="black" points="255.35,-235.6 255.35,-357.2 459.62,-357.2 459.62,-235.6 255.35,-235.6"/>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-338.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ object_type: ObjectType</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-325" font-family="Helvetica,sans-Serif" font-size="11.00">+ object_id: str</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-311.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ trace_id: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-298.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ quality_status: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-285.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ error_status: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-272.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ payload: dict</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-259" font-family="Helvetica,sans-Serif" font-size="11.00">+ provenance: Provenance</text>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-245.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ time_context: TimeContext</text>
+<polygon fill="none" stroke="black" points="255.35,-206.4 255.35,-235.6 459.62,-235.6 459.62,-206.4 255.35,-206.4"/>
+<text xml:space="preserve" text-anchor="start" x="263.35" y="-216.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None {abstract}</text>
+</g>
+<!-- Provenance -->
+<g id="node2" class="node">
+<title>Provenance</title>
+<polygon fill="#edf2f7" stroke="none" points="0,-95.2 0,-133.2 200.97,-133.2 200.97,-95.2 0,-95.2"/>
+<polygon fill="none" stroke="black" points="0,-95.2 0,-133.2 200.97,-133.2 200.97,-95.2 0,-95.2"/>
+<text xml:space="preserve" text-anchor="start" x="33.54" y="-116.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing value object&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="69.3" y="-105.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Provenance</text>
+<polygon fill="none" stroke="black" points="0,-13.2 0,-95.2 200.97,-95.2 200.97,-13.2 0,-13.2"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-76.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ parent_object_ids: list[str]</text>
+<text xml:space="preserve" text-anchor="start" x="8" y="-63" font-family="Helvetica,sans-Serif" font-size="11.00">+ source_native_id: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="8" y="-49.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ created_by_component: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="8" y="-36.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ component_version: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="8" y="-23.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ configuration_version: str or None</text>
+</g>
+<!-- DataObject&#45;&gt;Provenance -->
+<g id="edge1" class="edge">
+<title>DataObject&#45;&gt;Provenance</title>
+<path fill="none" stroke="#334155" d="M247.88,-203.59C220.59,-179.63 192.13,-154.65 167.59,-133.1"/>
+<polygon fill="#334155" stroke="#334155" points="247.65,-203.39 253.37,-204.15 254.87,-209.72 249.15,-208.96 247.65,-203.39"/>
+<text xml:space="preserve" text-anchor="middle" x="255.19" y="-173.4" font-family="Helvetica,sans-Serif" font-size="10.00">owns metadata</text>
+<text xml:space="preserve" text-anchor="middle" x="164.81" y="-136.1" font-family="Helvetica,sans-Serif" font-size="10.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="252.76" y="-213.31" font-family="Helvetica,sans-Serif" font-size="10.00">1</text>
+</g>
+<!-- TimeContext -->
+<g id="node3" class="node">
+<title>TimeContext</title>
+<polygon fill="#edf2f7" stroke="none" points="220.93,-108.4 220.93,-146.4 494.04,-146.4 494.04,-108.4 220.93,-108.4"/>
+<polygon fill="none" stroke="black" points="220.93,-108.4 220.93,-146.4 494.04,-146.4 494.04,-108.4 220.93,-108.4"/>
+<text xml:space="preserve" text-anchor="start" x="290.54" y="-129.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing value object&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="324.18" y="-118.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">TimeContext</text>
+<polygon fill="none" stroke="black" points="220.93,0 220.93,-108.4 494.04,-108.4 494.04,0 220.93,0"/>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-89.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ source_capture_time: datetime or None</text>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-76.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ receipt_time: datetime or None</text>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-63" font-family="Helvetica,sans-Serif" font-size="11.00">+ processing_time: datetime or None</text>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-49.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ valid_from / valid_until: datetime or None</text>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-36.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ dispatch_time / completion_time: datetime or None</text>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-23.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ clock_offset_estimate: float or None</text>
+<text xml:space="preserve" text-anchor="start" x="228.93" y="-10.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ clock_quality / sync_source: str or None</text>
+</g>
+<!-- DataObject&#45;&gt;TimeContext -->
+<g id="edge2" class="edge">
+<title>DataObject&#45;&gt;TimeContext</title>
+<path fill="none" stroke="#334155" d="M357.48,-195.97C357.48,-179.13 357.48,-162.02 357.48,-146.16"/>
+<polygon fill="#334155" stroke="#334155" points="357.48,-195.91 360.68,-200.71 357.48,-205.51 354.28,-200.71 357.48,-195.91"/>
+<text xml:space="preserve" text-anchor="middle" x="391.39" y="-173.4" font-family="Helvetica,sans-Serif" font-size="10.00">owns metadata</text>
+<text xml:space="preserve" text-anchor="middle" x="354.7" y="-149.16" font-family="Helvetica,sans-Serif" font-size="10.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="354.7" y="-197.41" font-family="Helvetica,sans-Serif" font-size="10.00">1</text>
+</g>
+<!-- ExecutionContext -->
+<g id="node4" class="node">
+<title>ExecutionContext</title>
+<polygon fill="#edf2f7" stroke="none" points="514.52,-75.4 514.52,-113.4 700.45,-113.4 700.45,-75.4 514.52,-75.4"/>
+<polygon fill="none" stroke="black" points="514.52,-75.4 514.52,-113.4 700.45,-113.4 700.45,-75.4 514.52,-75.4"/>
+<text xml:space="preserve" text-anchor="start" x="522.52" y="-96.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed, not implemented&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="560.73" y="-85.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">ExecutionContext</text>
+<polygon fill="none" stroke="black" points="514.52,-33 514.52,-75.4 700.45,-75.4 700.45,-33 514.52,-33"/>
+<text xml:space="preserve" text-anchor="start" x="522.52" y="-56.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ session_id: str</text>
+<text xml:space="preserve" text-anchor="start" x="522.52" y="-43.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ run_id: str</text>
+</g>
+<!-- DataObject&#45;&gt;ExecutionContext -->
+<g id="edge3" class="edge">
+<title>DataObject&#45;&gt;ExecutionContext</title>
+<path fill="none" stroke="#334155" d="M459.53,-207.71C493.4,-177.15 529.61,-144.48 557.72,-119.11"/>
+<polygon fill="#334155" stroke="#334155" points="563.42,-113.97 559.89,-122 561.35,-115.83 557.48,-119.33 557.48,-119.33 557.48,-119.33 561.35,-115.83 555.07,-116.65 563.42,-113.97"/>
+<text xml:space="preserve" text-anchor="middle" x="559.16" y="-173.4" font-family="Helvetica,sans-Serif" font-size="10.00">candidate context reference</text>
+<text xml:space="preserve" text-anchor="middle" x="555.98" y="-116.15" font-family="Helvetica,sans-Serif" font-size="10.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="467.03" y="-210.71" font-family="Helvetica,sans-Serif" font-size="10.00">0..*</text>
+</g>
+</g>
+</svg>
+<figcaption><a href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzM2cHQiIGhlaWdodD0iNDYxcHQiCiB2aWV3Qm94PSIwLjAwIDAuMDAgNzM2LjAwIDQ2MS4wMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CjxnIGlkPSJncmFwaDAiIGNsYXNzPSJncmFwaCIgdHJhbnNmb3JtPSJzY2FsZSgxIDEpIHJvdGF0ZSgwKSB0cmFuc2xhdGUoMTggNDQyLjgpIj4KPHRpdGxlPlNBUjwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IndoaXRlIiBzdHJva2U9Im5vbmUiIHBvaW50cz0iLTE4LDE4IC0xOCwtNDQyLjggNzE4LjQ1LC00NDIuOCA3MTguNDUsMTggLTE4LDE4Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM1MC4yMiIgeT0iLTQwNC42IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTguMDAiPjAxIFNoYXJlZCBkYXRhIGNvbnRyYWN0IGFuZCBjb21wb3NlZCBtZXRhZGF0YSB8IHByb3Bvc2VkIGRlc2lnbjwvdGV4dD4KPCEtLSBEYXRhT2JqZWN0IC0tPgo8ZyBpZD0ibm9kZTEiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkRhdGFPYmplY3Q8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iMjU1LjM1LC0zNTcuMiAyNTUuMzUsLTM5NS4yIDQ1OS42MiwtMzk1LjIgNDU5LjYyLC0zNTcuMiAyNTUuMzUsLTM1Ny4yIi8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMjU1LjM1LC0zNTcuMiAyNTUuMzUsLTM5NS4yIDQ1OS42MiwtMzk1LjIgNDU5LjYyLC0zNTcuMiAyNTUuMzUsLTM1Ny4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjYzLjM1IiB5PSItMzc4LjMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7YWJzdHJhY3QsIGZvcm1hbCBBQkMgcHJvcG9zZWQmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzMjguNDUiIHk9Ii0zNjcuMyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+RGF0YU9iamVjdDwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIyNTUuMzUsLTIzNS42IDI1NS4zNSwtMzU3LjIgNDU5LjYyLC0zNTcuMiA0NTkuNjIsLTIzNS42IDI1NS4zNSwtMjM1LjYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyNjMuMzUiIHk9Ii0zMzguMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIG9iamVjdF90eXBlOiBPYmplY3RUeXBlPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI2My4zNSIgeT0iLTMyNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIG9iamVjdF9pZDogc3RyPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI2My4zNSIgeT0iLTMxMS44IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgdHJhY2VfaWQ6IHN0ciBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI2My4zNSIgeT0iLTI5OC42IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgcXVhbGl0eV9zdGF0dXM6IHN0ciBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI2My4zNSIgeT0iLTI4NS40IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgZXJyb3Jfc3RhdHVzOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyNjMuMzUiIHk9Ii0yNzIuMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHBheWxvYWQ6IGRpY3Q8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjYzLjM1IiB5PSItMjU5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgcHJvdmVuYW5jZTogUHJvdmVuYW5jZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyNjMuMzUiIHk9Ii0yNDUuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHRpbWVfY29udGV4dDogVGltZUNvbnRleHQ8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMjU1LjM1LC0yMDYuNCAyNTUuMzUsLTIzNS42IDQ1OS42MiwtMjM1LjYgNDU5LjYyLC0yMDYuNCAyNTUuMzUsLTIwNi40Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjYzLjM1IiB5PSItMjE2LjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBfX3Bvc3RfaW5pdF9fKCk6IE5vbmUge2Fic3RyYWN0fTwvdGV4dD4KPC9nPgo8IS0tIFByb3ZlbmFuY2UgLS0+CjxnIGlkPSJub2RlMiIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+UHJvdmVuYW5jZTwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSIwLC05NS4yIDAsLTEzMy4yIDIwMC45NywtMTMzLjIgMjAwLjk3LC05NS4yIDAsLTk1LjIiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIwLC05NS4yIDAsLTEzMy4yIDIwMC45NywtMTMzLjIgMjAwLjk3LC05NS4yIDAsLTk1LjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzMy41NCIgeT0iLTExNi4zIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIHZhbHVlIG9iamVjdCZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjY5LjMiIHk9Ii0xMDUuMyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+UHJvdmVuYW5jZTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIwLC0xMy4yIDAsLTk1LjIgMjAwLjk3LC05NS4yIDIwMC45NywtMTMuMiAwLC0xMy4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iOCIgeT0iLTc2LjIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBwYXJlbnRfb2JqZWN0X2lkczogbGlzdFtzdHJdPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii02MyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNvdXJjZV9uYXRpdmVfaWQ6IHN0ciBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii00OS44IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgY3JlYXRlZF9ieV9jb21wb25lbnQ6IHN0ciBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0zNi42IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgY29tcG9uZW50X3ZlcnNpb246IHN0ciBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0yMy40IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgY29uZmlndXJhdGlvbl92ZXJzaW9uOiBzdHIgb3IgTm9uZTwvdGV4dD4KPC9nPgo8IS0tIERhdGFPYmplY3QmIzQ1OyZndDtQcm92ZW5hbmNlIC0tPgo8ZyBpZD0iZWRnZTEiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPkRhdGFPYmplY3QmIzQ1OyZndDtQcm92ZW5hbmNlPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNMjQ3Ljg4LC0yMDMuNTlDMjIwLjU5LC0xNzkuNjMgMTkyLjEzLC0xNTQuNjUgMTY3LjU5LC0xMzMuMSIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iMjQ3LjY1LC0yMDMuMzkgMjUzLjM3LC0yMDQuMTUgMjU0Ljg3LC0yMDkuNzIgMjQ5LjE1LC0yMDguOTYgMjQ3LjY1LC0yMDMuMzkiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjU1LjE5IiB5PSItMTczLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+b3ducyBtZXRhZGF0YTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMTY0LjgxIiB5PSItMTM2LjEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+MTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjUyLjc2IiB5PSItMjEzLjMxIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPjE8L3RleHQ+CjwvZz4KPCEtLSBUaW1lQ29udGV4dCAtLT4KPGcgaWQ9Im5vZGUzIiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5UaW1lQ29udGV4dDwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSIyMjAuOTMsLTEwOC40IDIyMC45MywtMTQ2LjQgNDk0LjA0LC0xNDYuNCA0OTQuMDQsLTEwOC40IDIyMC45MywtMTA4LjQiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIyMjAuOTMsLTEwOC40IDIyMC45MywtMTQ2LjQgNDk0LjA0LC0xNDYuNCA0OTQuMDQsLTEwOC40IDIyMC45MywtMTA4LjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyOTAuNTQiIHk9Ii0xMjkuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtleGlzdGluZyB2YWx1ZSBvYmplY3QmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzMjQuMTgiIHk9Ii0xMTguNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+VGltZUNvbnRleHQ8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMjIwLjkzLDAgMjIwLjkzLC0xMDguNCA0OTQuMDQsLTEwOC40IDQ5NC4wNCwwIDIyMC45MywwIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjI4LjkzIiB5PSItODkuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNvdXJjZV9jYXB0dXJlX3RpbWU6IGRhdGV0aW1lIG9yIE5vbmU8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjI4LjkzIiB5PSItNzYuMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHJlY2VpcHRfdGltZTogZGF0ZXRpbWUgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyMjguOTMiIHk9Ii02MyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHByb2Nlc3NpbmdfdGltZTogZGF0ZXRpbWUgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyMjguOTMiIHk9Ii00OS44IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgdmFsaWRfZnJvbSAvIHZhbGlkX3VudGlsOiBkYXRldGltZSBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjIyOC45MyIgeT0iLTM2LjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBkaXNwYXRjaF90aW1lIC8gY29tcGxldGlvbl90aW1lOiBkYXRldGltZSBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjIyOC45MyIgeT0iLTIzLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBjbG9ja19vZmZzZXRfZXN0aW1hdGU6IGZsb2F0IG9yIE5vbmU8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjI4LjkzIiB5PSItMTAuMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGNsb2NrX3F1YWxpdHkgLyBzeW5jX3NvdXJjZTogc3RyIG9yIE5vbmU8L3RleHQ+CjwvZz4KPCEtLSBEYXRhT2JqZWN0JiM0NTsmZ3Q7VGltZUNvbnRleHQgLS0+CjxnIGlkPSJlZGdlMiIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+RGF0YU9iamVjdCYjNDU7Jmd0O1RpbWVDb250ZXh0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNMzU3LjQ4LC0xOTUuOTdDMzU3LjQ4LC0xNzkuMTMgMzU3LjQ4LC0xNjIuMDIgMzU3LjQ4LC0xNDYuMTYiLz4KPHBvbHlnb24gZmlsbD0iIzMzNDE1NSIgc3Ryb2tlPSIjMzM0MTU1IiBwb2ludHM9IjM1Ny40OCwtMTk1LjkxIDM2MC42OCwtMjAwLjcxIDM1Ny40OCwtMjA1LjUxIDM1NC4yOCwtMjAwLjcxIDM1Ny40OCwtMTk1LjkxIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM5MS4zOSIgeT0iLTE3My40IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPm93bnMgbWV0YWRhdGE8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM1NC43IiB5PSItMTQ5LjE2IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPjE8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM1NC43IiB5PSItMTk3LjQxIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPjE8L3RleHQ+CjwvZz4KPCEtLSBFeGVjdXRpb25Db250ZXh0IC0tPgo8ZyBpZD0ibm9kZTQiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkV4ZWN1dGlvbkNvbnRleHQ8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iNTE0LjUyLC03NS40IDUxNC41MiwtMTEzLjQgNzAwLjQ1LC0xMTMuNCA3MDAuNDUsLTc1LjQgNTE0LjUyLC03NS40Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNTE0LjUyLC03NS40IDUxNC41MiwtMTEzLjQgNzAwLjQ1LC0xMTMuNCA3MDAuNDUsLTc1LjQgNTE0LjUyLC03NS40Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTIyLjUyIiB5PSItOTYuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtwcm9wb3NlZCwgbm90IGltcGxlbWVudGVkJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTYwLjczIiB5PSItODUuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+RXhlY3V0aW9uQ29udGV4dDwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI1MTQuNTIsLTMzIDUxNC41MiwtNzUuNCA3MDAuNDUsLTc1LjQgNzAwLjQ1LC0zMyA1MTQuNTIsLTMzIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTIyLjUyIiB5PSItNTYuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNlc3Npb25faWQ6IHN0cjwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI1MjIuNTIiIHk9Ii00My4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgcnVuX2lkOiBzdHI8L3RleHQ+CjwvZz4KPCEtLSBEYXRhT2JqZWN0JiM0NTsmZ3Q7RXhlY3V0aW9uQ29udGV4dCAtLT4KPGcgaWQ9ImVkZ2UzIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5EYXRhT2JqZWN0JiM0NTsmZ3Q7RXhlY3V0aW9uQ29udGV4dDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgZD0iTTQ1OS41MywtMjA3LjcxQzQ5My40LC0xNzcuMTUgNTI5LjYxLC0xNDQuNDggNTU3LjcyLC0xMTkuMTEiLz4KPHBvbHlnb24gZmlsbD0iIzMzNDE1NSIgc3Ryb2tlPSIjMzM0MTU1IiBwb2ludHM9IjU2My40MiwtMTEzLjk3IDU1OS44OSwtMTIyIDU2MS4zNSwtMTE1LjgzIDU1Ny40OCwtMTE5LjMzIDU1Ny40OCwtMTE5LjMzIDU1Ny40OCwtMTE5LjMzIDU2MS4zNSwtMTE1LjgzIDU1NS4wNywtMTE2LjY1IDU2My40MiwtMTEzLjk3Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjU1OS4xNiIgeT0iLTE3My40IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPmNhbmRpZGF0ZSBjb250ZXh0IHJlZmVyZW5jZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNTU1Ljk4IiB5PSItMTE2LjE1IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPjAuLjE8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjQ2Ny4wMyIgeT0iLTIxMC43MSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjEwLjAwIj4wLi4qPC90ZXh0Pgo8L2c+CjwvZz4KPC9zdmc+Cg==" download="01_shared_contract.svg">Download this SVG diagram</a></figcaption></figure>
+<h3>9.2 Evidence and interpretation subclasses</h3>
+<figure><svg width="903pt" height="329pt"
+ viewBox="0.00 0.00 903.00 329.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 311)">
+<title>SAR</title>
+<polygon fill="white" stroke="none" points="-18,18 -18,-311 885.02,-311 885.02,18 -18,18"/>
+<text xml:space="preserve" text-anchor="middle" x="433.51" y="-272.8" font-family="Helvetica,sans-Serif" font-size="18.00">02 Evidence and interpretation objects | existing shallow hierarchy</text>
+<!-- DataObject -->
+<g id="node1" class="node">
+<title>DataObject</title>
+<polygon fill="#edf2f7" stroke="none" points="329.23,-29.2 329.23,-67.2 531.42,-67.2 531.42,-29.2 329.23,-29.2"/>
+<polygon fill="none" stroke="black" points="329.23,-29.2 329.23,-67.2 531.42,-67.2 531.42,-29.2 329.23,-29.2"/>
+<text xml:space="preserve" text-anchor="start" x="353.28" y="-50.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;abstract, see diagram 01&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="401.29" y="-39.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">DataObject</text>
+<polygon fill="none" stroke="black" points="329.23,0 329.23,-29.2 531.42,-29.2 531.42,0 329.23,0"/>
+<text xml:space="preserve" text-anchor="start" x="337.23" y="-10.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ common identity, payload, metadata</text>
+</g>
+<!-- Observation -->
+<g id="node2" class="node">
+<title>Observation</title>
+<polygon fill="#edf2f7" stroke="none" points="0,-199 0,-237 130.66,-237 130.66,-199 0,-199"/>
+<polygon fill="none" stroke="black" points="0,-199 0,-237 130.66,-237 130.66,-199 0,-199"/>
+<text xml:space="preserve" text-anchor="start" x="9.08" y="-220.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="33.24" y="-209.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Observation</text>
+<polygon fill="none" stroke="black" points="0,-169.8 0,-199 130.66,-199 130.66,-169.8 0,-169.8"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-180" font-family="Helvetica,sans-Serif" font-size="11.00">+ source_id: str</text>
+<polygon fill="none" stroke="black" points="0,-140.6 0,-169.8 130.66,-169.8 130.66,-140.6 0,-140.6"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-150.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- Observation&#45;&gt;DataObject -->
+<g id="edge1" class="edge">
+<title>Observation&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M106.42,-140.84C116.97,-130.92 128.89,-121.31 141.33,-114.2 196.22,-82.84 264.1,-63.31 320.28,-51.46"/>
+<polygon fill="none" stroke="#334155" points="320.79,-54.21 328.06,-49.85 319.66,-48.73 320.79,-54.21"/>
+</g>
+<!-- Event -->
+<g id="node3" class="node">
+<title>Event</title>
+<polygon fill="#edf2f7" stroke="none" points="150.93,-225.4 150.93,-263.4 331.73,-263.4 331.73,-225.4 150.93,-225.4"/>
+<polygon fill="none" stroke="black" points="150.93,-225.4 150.93,-263.4 331.73,-263.4 331.73,-225.4 150.93,-225.4"/>
+<text xml:space="preserve" text-anchor="start" x="185.08" y="-246.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="226.35" y="-235.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Event</text>
+<polygon fill="none" stroke="black" points="150.93,-169.8 150.93,-225.4 331.73,-225.4 331.73,-169.8 150.93,-169.8"/>
+<text xml:space="preserve" text-anchor="start" x="158.93" y="-206.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ event_type: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="158.93" y="-193.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ room_entity_id: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="158.93" y="-180" font-family="Helvetica,sans-Serif" font-size="11.00">+ observation_ids: list[str]</text>
+<polygon fill="none" stroke="black" points="150.93,-114.2 150.93,-169.8 331.73,-169.8 331.73,-114.2 150.93,-114.2"/>
+<text xml:space="preserve" text-anchor="start" x="158.93" y="-150.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+<text xml:space="preserve" text-anchor="start" x="158.93" y="-137.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ add_observation_id(id): None</text>
+<text xml:space="preserve" text-anchor="start" x="158.93" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ add_observation_ids(ids): None</text>
+</g>
+<!-- Event&#45;&gt;DataObject -->
+<g id="edge2" class="edge">
+<title>Event&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M331.68,-114.57C349.62,-100.02 367.76,-85.32 383.51,-72.55"/>
+<polygon fill="none" stroke="#334155" points="384.94,-75 389.39,-67.78 381.41,-70.65 384.94,-75"/>
+</g>
+<!-- Entity -->
+<g id="node4" class="node">
+<title>Entity</title>
+<polygon fill="#edf2f7" stroke="none" points="351.25,-212.2 351.25,-250.2 509.4,-250.2 509.4,-212.2 351.25,-212.2"/>
+<polygon fill="none" stroke="black" points="351.25,-212.2 351.25,-250.2 509.4,-250.2 509.4,-212.2 351.25,-212.2"/>
+<text xml:space="preserve" text-anchor="start" x="374.08" y="-233.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="415.05" y="-222.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Entity</text>
+<polygon fill="none" stroke="black" points="351.25,-156.6 351.25,-212.2 509.4,-212.2 509.4,-156.6 351.25,-156.6"/>
+<text xml:space="preserve" text-anchor="start" x="359.25" y="-193.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ entity_type: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="359.25" y="-180" font-family="Helvetica,sans-Serif" font-size="11.00">+ room_entity_id: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="359.25" y="-166.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ is_canonical_room: bool</text>
+<polygon fill="none" stroke="black" points="351.25,-127.4 351.25,-156.6 509.4,-156.6 509.4,-127.4 351.25,-127.4"/>
+<text xml:space="preserve" text-anchor="start" x="359.25" y="-137.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- Entity&#45;&gt;DataObject -->
+<g id="edge3" class="edge">
+<title>Entity&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M430.33,-127.69C430.33,-110.61 430.33,-92.39 430.33,-76.63"/>
+<polygon fill="none" stroke="#334155" points="433.13,-76.69 430.33,-68.69 427.53,-76.69 433.13,-76.69"/>
+</g>
+<!-- State -->
+<g id="node5" class="node">
+<title>State</title>
+<polygon fill="#edf2f7" stroke="none" points="529.25,-205.6 529.25,-243.6 687.4,-243.6 687.4,-205.6 529.25,-205.6"/>
+<polygon fill="none" stroke="black" points="529.25,-205.6 529.25,-243.6 687.4,-243.6 687.4,-205.6 529.25,-205.6"/>
+<text xml:space="preserve" text-anchor="start" x="552.08" y="-226.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="594.88" y="-215.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">State</text>
+<polygon fill="none" stroke="black" points="529.25,-163.2 529.25,-205.6 687.4,-205.6 687.4,-163.2 529.25,-163.2"/>
+<text xml:space="preserve" text-anchor="start" x="537.25" y="-186.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ state_scope: str or None</text>
+<text xml:space="preserve" text-anchor="start" x="537.25" y="-173.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ room_entity_id: str or None</text>
+<polygon fill="none" stroke="black" points="529.25,-134 529.25,-163.2 687.4,-163.2 687.4,-134 529.25,-134"/>
+<text xml:space="preserve" text-anchor="start" x="537.25" y="-144.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- State&#45;&gt;DataObject -->
+<g id="edge4" class="edge">
+<title>State&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M545.82,-134C522.51,-113.94 496.53,-91.58 475.13,-73.16"/>
+<polygon fill="none" stroke="#334155" points="477.09,-71.15 469.2,-68.06 473.44,-75.4 477.09,-71.15"/>
+</g>
+<!-- SemanticState -->
+<g id="node6" class="node">
+<title>SemanticState</title>
+<polygon fill="#edf2f7" stroke="none" points="707.64,-199 707.64,-237 867.02,-237 867.02,-199 707.64,-199"/>
+<polygon fill="none" stroke="black" points="707.64,-199 707.64,-237 867.02,-237 867.02,-199 707.64,-199"/>
+<text xml:space="preserve" text-anchor="start" x="731.08" y="-220.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="749.42" y="-209.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">SemanticState</text>
+<polygon fill="none" stroke="black" points="707.64,-169.8 707.64,-199 867.02,-199 867.02,-169.8 707.64,-169.8"/>
+<text xml:space="preserve" text-anchor="start" x="715.64" y="-180" font-family="Helvetica,sans-Serif" font-size="11.00">+ semantic_label: str or None</text>
+<polygon fill="none" stroke="black" points="707.64,-140.6 707.64,-169.8 867.02,-169.8 867.02,-140.6 707.64,-140.6"/>
+<text xml:space="preserve" text-anchor="start" x="715.64" y="-150.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- SemanticState&#45;&gt;DataObject -->
+<g id="edge5" class="edge">
+<title>SemanticState&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M737,-140.85C724.67,-131.04 711.06,-121.48 697.33,-114.2 648.55,-88.33 590.19,-69.71 540.49,-57.01"/>
+<polygon fill="none" stroke="#334155" points="541.22,-54.31 532.78,-55.07 539.86,-59.74 541.22,-54.31"/>
+</g>
+</g>
+</svg>
+<figcaption><a href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAzcHQiIGhlaWdodD0iMzI5cHQiCiB2aWV3Qm94PSIwLjAwIDAuMDAgOTAzLjAwIDMyOS4wMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CjxnIGlkPSJncmFwaDAiIGNsYXNzPSJncmFwaCIgdHJhbnNmb3JtPSJzY2FsZSgxIDEpIHJvdGF0ZSgwKSB0cmFuc2xhdGUoMTggMzExKSI+Cjx0aXRsZT5TQVI8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSJub25lIiBwb2ludHM9Ii0xOCwxOCAtMTgsLTMxMSA4ODUuMDIsLTMxMSA4ODUuMDIsMTggLTE4LDE4Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjQzMy41MSIgeT0iLTI3Mi44IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTguMDAiPjAyIEV2aWRlbmNlIGFuZCBpbnRlcnByZXRhdGlvbiBvYmplY3RzIHwgZXhpc3Rpbmcgc2hhbGxvdyBoaWVyYXJjaHk8L3RleHQ+CjwhLS0gRGF0YU9iamVjdCAtLT4KPGcgaWQ9Im5vZGUxIiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5EYXRhT2JqZWN0PC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjMyOS4yMywtMjkuMiAzMjkuMjMsLTY3LjIgNTMxLjQyLC02Ny4yIDUzMS40MiwtMjkuMiAzMjkuMjMsLTI5LjIiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIzMjkuMjMsLTI5LjIgMzI5LjIzLC02Ny4yIDUzMS40MiwtNjcuMiA1MzEuNDIsLTI5LjIgMzI5LjIzLC0yOS4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMzUzLjI4IiB5PSItNTAuMyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDthYnN0cmFjdCwgc2VlIGRpYWdyYW0gMDEmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI0MDEuMjkiIHk9Ii0zOS4zIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5EYXRhT2JqZWN0PC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjMyOS4yMywwIDMyOS4yMywtMjkuMiA1MzEuNDIsLTI5LjIgNTMxLjQyLDAgMzI5LjIzLDAiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzMzcuMjMiIHk9Ii0xMC4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgY29tbW9uIGlkZW50aXR5LCBwYXlsb2FkLCBtZXRhZGF0YTwvdGV4dD4KPC9nPgo8IS0tIE9ic2VydmF0aW9uIC0tPgo8ZyBpZD0ibm9kZTIiIGNsYXNzPSJub2RlIj4KPHRpdGxlPk9ic2VydmF0aW9uPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjAsLTE5OSAwLC0yMzcgMTMwLjY2LC0yMzcgMTMwLjY2LC0xOTkgMCwtMTk5Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMCwtMTk5IDAsLTIzNyAxMzAuNjYsLTIzNyAxMzAuNjYsLTE5OSAwLC0xOTkiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI5LjA4IiB5PSItMjIwLjEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3Rpbmcgc3VidHlwZSZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjMzLjI0IiB5PSItMjA5LjEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPk9ic2VydmF0aW9uPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTE2OS44IDAsLTE5OSAxMzAuNjYsLTE5OSAxMzAuNjYsLTE2OS44IDAsLTE2OS44Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iOCIgeT0iLTE4MCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNvdXJjZV9pZDogc3RyPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTE0MC42IDAsLTE2OS44IDEzMC42NiwtMTY5LjggMTMwLjY2LC0xNDAuNiAwLC0xNDAuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0xNTAuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIF9fcG9zdF9pbml0X18oKTogTm9uZTwvdGV4dD4KPC9nPgo8IS0tIE9ic2VydmF0aW9uJiM0NTsmZ3Q7RGF0YU9iamVjdCAtLT4KPGcgaWQ9ImVkZ2UxIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5PYnNlcnZhdGlvbiYjNDU7Jmd0O0RhdGFPYmplY3Q8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIGQ9Ik0xMDYuNDIsLTE0MC44NEMxMTYuOTcsLTEzMC45MiAxMjguODksLTEyMS4zMSAxNDEuMzMsLTExNC4yIDE5Ni4yMiwtODIuODQgMjY0LjEsLTYzLjMxIDMyMC4yOCwtNTEuNDYiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBwb2ludHM9IjMyMC43OSwtNTQuMjEgMzI4LjA2LC00OS44NSAzMTkuNjYsLTQ4LjczIDMyMC43OSwtNTQuMjEiLz4KPC9nPgo8IS0tIEV2ZW50IC0tPgo8ZyBpZD0ibm9kZTMiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkV2ZW50PC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjE1MC45MywtMjI1LjQgMTUwLjkzLC0yNjMuNCAzMzEuNzMsLTI2My40IDMzMS43MywtMjI1LjQgMTUwLjkzLC0yMjUuNCIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjE1MC45MywtMjI1LjQgMTUwLjkzLC0yNjMuNCAzMzEuNzMsLTI2My40IDMzMS43MywtMjI1LjQgMTUwLjkzLC0yMjUuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjE4NS4wOCIgeT0iLTI0Ni41IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIHN1YnR5cGUmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyMjYuMzUiIHk9Ii0yMzUuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+RXZlbnQ8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMTUwLjkzLC0xNjkuOCAxNTAuOTMsLTIyNS40IDMzMS43MywtMjI1LjQgMzMxLjczLC0xNjkuOCAxNTAuOTMsLTE2OS44Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTU4LjkzIiB5PSItMjA2LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBldmVudF90eXBlOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIxNTguOTMiIHk9Ii0xOTMuMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHJvb21fZW50aXR5X2lkOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIxNTguOTMiIHk9Ii0xODAiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBvYnNlcnZhdGlvbl9pZHM6IGxpc3Rbc3RyXTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIxNTAuOTMsLTExNC4yIDE1MC45MywtMTY5LjggMzMxLjczLC0xNjkuOCAzMzEuNzMsLTExNC4yIDE1MC45MywtMTE0LjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIxNTguOTMiIHk9Ii0xNTAuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIF9fcG9zdF9pbml0X18oKTogTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIxNTguOTMiIHk9Ii0xMzcuNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGFkZF9vYnNlcnZhdGlvbl9pZChpZCk6IE5vbmU8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTU4LjkzIiB5PSItMTI0LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBhZGRfb2JzZXJ2YXRpb25faWRzKGlkcyk6IE5vbmU8L3RleHQ+CjwvZz4KPCEtLSBFdmVudCYjNDU7Jmd0O0RhdGFPYmplY3QgLS0+CjxnIGlkPSJlZGdlMiIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+RXZlbnQmIzQ1OyZndDtEYXRhT2JqZWN0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNMzMxLjY4LC0xMTQuNTdDMzQ5LjYyLC0xMDAuMDIgMzY3Ljc2LC04NS4zMiAzODMuNTEsLTcyLjU1Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgcG9pbnRzPSIzODQuOTQsLTc1IDM4OS4zOSwtNjcuNzggMzgxLjQxLC03MC42NSAzODQuOTQsLTc1Ii8+CjwvZz4KPCEtLSBFbnRpdHkgLS0+CjxnIGlkPSJub2RlNCIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+RW50aXR5PC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjM1MS4yNSwtMjEyLjIgMzUxLjI1LC0yNTAuMiA1MDkuNCwtMjUwLjIgNTA5LjQsLTIxMi4yIDM1MS4yNSwtMjEyLjIiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIzNTEuMjUsLTIxMi4yIDM1MS4yNSwtMjUwLjIgNTA5LjQsLTI1MC4yIDUwOS40LC0yMTIuMiAzNTEuMjUsLTIxMi4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMzc0LjA4IiB5PSItMjMzLjMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3Rpbmcgc3VidHlwZSZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjQxNS4wNSIgeT0iLTIyMi4zIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5FbnRpdHk8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMzUxLjI1LC0xNTYuNiAzNTEuMjUsLTIxMi4yIDUwOS40LC0yMTIuMiA1MDkuNCwtMTU2LjYgMzUxLjI1LC0xNTYuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjM1OS4yNSIgeT0iLTE5My4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgZW50aXR5X3R5cGU6IHN0ciBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjM1OS4yNSIgeT0iLTE4MCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHJvb21fZW50aXR5X2lkOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzNTkuMjUiIHk9Ii0xNjYuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGlzX2Nhbm9uaWNhbF9yb29tOiBib29sPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjM1MS4yNSwtMTI3LjQgMzUxLjI1LC0xNTYuNiA1MDkuNCwtMTU2LjYgNTA5LjQsLTEyNy40IDM1MS4yNSwtMTI3LjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzNTkuMjUiIHk9Ii0xMzcuNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIF9fcG9zdF9pbml0X18oKTogTm9uZTwvdGV4dD4KPC9nPgo8IS0tIEVudGl0eSYjNDU7Jmd0O0RhdGFPYmplY3QgLS0+CjxnIGlkPSJlZGdlMyIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+RW50aXR5JiM0NTsmZ3Q7RGF0YU9iamVjdDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgZD0iTTQzMC4zMywtMTI3LjY5QzQzMC4zMywtMTEwLjYxIDQzMC4zMywtOTIuMzkgNDMwLjMzLC03Ni42MyIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNDMzLjEzLC03Ni42OSA0MzAuMzMsLTY4LjY5IDQyNy41MywtNzYuNjkgNDMzLjEzLC03Ni42OSIvPgo8L2c+CjwhLS0gU3RhdGUgLS0+CjxnIGlkPSJub2RlNSIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+U3RhdGU8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iNTI5LjI1LC0yMDUuNiA1MjkuMjUsLTI0My42IDY4Ny40LC0yNDMuNiA2ODcuNCwtMjA1LjYgNTI5LjI1LC0yMDUuNiIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjUyOS4yNSwtMjA1LjYgNTI5LjI1LC0yNDMuNiA2ODcuNCwtMjQzLjYgNjg3LjQsLTIwNS42IDUyOS4yNSwtMjA1LjYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI1NTIuMDgiIHk9Ii0yMjYuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtleGlzdGluZyBzdWJ0eXBlJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTk0Ljg4IiB5PSItMjE1LjciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPlN0YXRlPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjUyOS4yNSwtMTYzLjIgNTI5LjI1LC0yMDUuNiA2ODcuNCwtMjA1LjYgNjg3LjQsLTE2My4yIDUyOS4yNSwtMTYzLjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI1MzcuMjUiIHk9Ii0xODYuNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHN0YXRlX3Njb3BlOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI1MzcuMjUiIHk9Ii0xNzMuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHJvb21fZW50aXR5X2lkOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI1MjkuMjUsLTEzNCA1MjkuMjUsLTE2My4yIDY4Ny40LC0xNjMuMiA2ODcuNCwtMTM0IDUyOS4yNSwtMTM0Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTM3LjI1IiB5PSItMTQ0LjIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBfX3Bvc3RfaW5pdF9fKCk6IE5vbmU8L3RleHQ+CjwvZz4KPCEtLSBTdGF0ZSYjNDU7Jmd0O0RhdGFPYmplY3QgLS0+CjxnIGlkPSJlZGdlNCIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+U3RhdGUmIzQ1OyZndDtEYXRhT2JqZWN0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNNTQ1LjgyLC0xMzRDNTIyLjUxLC0xMTMuOTQgNDk2LjUzLC05MS41OCA0NzUuMTMsLTczLjE2Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgcG9pbnRzPSI0NzcuMDksLTcxLjE1IDQ2OS4yLC02OC4wNiA0NzMuNDQsLTc1LjQgNDc3LjA5LC03MS4xNSIvPgo8L2c+CjwhLS0gU2VtYW50aWNTdGF0ZSAtLT4KPGcgaWQ9Im5vZGU2IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5TZW1hbnRpY1N0YXRlPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjcwNy42NCwtMTk5IDcwNy42NCwtMjM3IDg2Ny4wMiwtMjM3IDg2Ny4wMiwtMTk5IDcwNy42NCwtMTk5Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNzA3LjY0LC0xOTkgNzA3LjY0LC0yMzcgODY3LjAyLC0yMzcgODY3LjAyLC0xOTkgNzA3LjY0LC0xOTkiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI3MzEuMDgiIHk9Ii0yMjAuMSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtleGlzdGluZyBzdWJ0eXBlJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNzQ5LjQyIiB5PSItMjA5LjEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPlNlbWFudGljU3RhdGU8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNzA3LjY0LC0xNjkuOCA3MDcuNjQsLTE5OSA4NjcuMDIsLTE5OSA4NjcuMDIsLTE2OS44IDcwNy42NCwtMTY5LjgiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI3MTUuNjQiIHk9Ii0xODAiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBzZW1hbnRpY19sYWJlbDogc3RyIG9yIE5vbmU8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNzA3LjY0LC0xNDAuNiA3MDcuNjQsLTE2OS44IDg2Ny4wMiwtMTY5LjggODY3LjAyLC0xNDAuNiA3MDcuNjQsLTE0MC42Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNzE1LjY0IiB5PSItMTUwLjgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBfX3Bvc3RfaW5pdF9fKCk6IE5vbmU8L3RleHQ+CjwvZz4KPCEtLSBTZW1hbnRpY1N0YXRlJiM0NTsmZ3Q7RGF0YU9iamVjdCAtLT4KPGcgaWQ9ImVkZ2U1IiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5TZW1hbnRpY1N0YXRlJiM0NTsmZ3Q7RGF0YU9iamVjdDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgZD0iTTczNywtMTQwLjg1QzcyNC42NywtMTMxLjA0IDcxMS4wNiwtMTIxLjQ4IDY5Ny4zMywtMTE0LjIgNjQ4LjU1LC04OC4zMyA1OTAuMTksLTY5LjcxIDU0MC40OSwtNTcuMDEiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBwb2ludHM9IjU0MS4yMiwtNTQuMzEgNTMyLjc4LC01NS4wNyA1MzkuODYsLTU5Ljc0IDU0MS4yMiwtNTQuMzEiLz4KPC9nPgo8L2c+Cjwvc3ZnPgo=" download="02_evidence_objects.svg">Download this SVG diagram</a></figcaption></figure>
+<h3>9.3 Response and evaluation subclasses</h3>
+<figure><svg width="827pt" height="276pt"
+ viewBox="0.00 0.00 827.00 276.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 258.2)">
+<title>SAR</title>
+<polygon fill="white" stroke="none" points="-18,18 -18,-258.2 809.36,-258.2 809.36,18 -18,18"/>
+<text xml:space="preserve" text-anchor="middle" x="395.68" y="-220" font-family="Helvetica,sans-Serif" font-size="18.00">03 Response and evaluation objects | existing shallow hierarchy</text>
+<!-- DataObject -->
+<g id="node1" class="node">
+<title>DataObject</title>
+<polygon fill="#edf2f7" stroke="none" points="301.48,-29.2 301.48,-67.2 503.66,-67.2 503.66,-29.2 301.48,-29.2"/>
+<polygon fill="none" stroke="black" points="301.48,-29.2 301.48,-67.2 503.66,-67.2 503.66,-29.2 301.48,-29.2"/>
+<text xml:space="preserve" text-anchor="start" x="325.52" y="-50.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;abstract, see diagram 01&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="373.53" y="-39.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">DataObject</text>
+<polygon fill="none" stroke="black" points="301.48,0 301.48,-29.2 503.66,-29.2 503.66,0 301.48,0"/>
+<text xml:space="preserve" text-anchor="start" x="309.48" y="-10.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ common identity, payload, metadata</text>
+</g>
+<!-- Decision -->
+<g id="node2" class="node">
+<title>Decision</title>
+<polygon fill="#edf2f7" stroke="none" points="0,-172.6 0,-210.6 147.14,-210.6 147.14,-172.6 0,-172.6"/>
+<polygon fill="none" stroke="black" points="0,-172.6 0,-210.6 147.14,-210.6 147.14,-172.6 0,-172.6"/>
+<text xml:space="preserve" text-anchor="start" x="17.32" y="-193.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="50.65" y="-182.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Decision</text>
+<polygon fill="none" stroke="black" points="0,-143.4 0,-172.6 147.14,-172.6 147.14,-143.4 0,-143.4"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-153.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ policy_result: str or None</text>
+<polygon fill="none" stroke="black" points="0,-114.2 0,-143.4 147.14,-143.4 147.14,-114.2 0,-114.2"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- Decision&#45;&gt;DataObject -->
+<g id="edge1" class="edge">
+<title>Decision&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M146.9,-119.11C150.48,-117.39 154.05,-115.74 157.57,-114.2 200.69,-95.3 249.77,-78.49 292.62,-65.24"/>
+<polygon fill="none" stroke="#334155" points="293.39,-67.93 300.22,-62.91 291.75,-62.58 293.39,-67.93"/>
+</g>
+<!-- Intent -->
+<g id="node3" class="node">
+<title>Intent</title>
+<polygon fill="#edf2f7" stroke="none" points="167.3,-172.6 167.3,-210.6 313.84,-210.6 313.84,-172.6 167.3,-172.6"/>
+<polygon fill="none" stroke="black" points="167.3,-172.6 167.3,-210.6 313.84,-210.6 313.84,-172.6 167.3,-172.6"/>
+<text xml:space="preserve" text-anchor="start" x="184.32" y="-193.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="225.6" y="-182.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Intent</text>
+<polygon fill="none" stroke="black" points="167.3,-143.4 167.3,-172.6 313.84,-172.6 313.84,-143.4 167.3,-143.4"/>
+<text xml:space="preserve" text-anchor="start" x="175.3" y="-153.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ intent_name: str or None</text>
+<polygon fill="none" stroke="black" points="167.3,-114.2 167.3,-143.4 313.84,-143.4 313.84,-114.2 167.3,-114.2"/>
+<text xml:space="preserve" text-anchor="start" x="175.3" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- Intent&#45;&gt;DataObject -->
+<g id="edge2" class="edge">
+<title>Intent&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M300.43,-114.54C318.1,-100.72 337.21,-85.76 354.06,-72.57"/>
+<polygon fill="none" stroke="#334155" points="355.37,-75.1 359.95,-67.96 351.92,-70.69 355.37,-75.1"/>
+</g>
+<!-- ExecutionPlan -->
+<g id="node4" class="node">
+<title>ExecutionPlan</title>
+<polygon fill="#edf2f7" stroke="none" points="333.59,-172.6 333.59,-210.6 471.55,-210.6 471.55,-172.6 333.59,-172.6"/>
+<polygon fill="none" stroke="black" points="333.59,-172.6 333.59,-210.6 471.55,-210.6 471.55,-172.6 333.59,-172.6"/>
+<text xml:space="preserve" text-anchor="start" x="346.32" y="-193.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="364.67" y="-182.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">ExecutionPlan</text>
+<polygon fill="none" stroke="black" points="333.59,-143.4 333.59,-172.6 471.55,-172.6 471.55,-143.4 333.59,-143.4"/>
+<text xml:space="preserve" text-anchor="start" x="341.59" y="-153.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ steps: list[dict[str, Any]]</text>
+<polygon fill="none" stroke="black" points="333.59,-114.2 333.59,-143.4 471.55,-143.4 471.55,-114.2 333.59,-114.2"/>
+<text xml:space="preserve" text-anchor="start" x="341.59" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- ExecutionPlan&#45;&gt;DataObject -->
+<g id="edge3" class="edge">
+<title>ExecutionPlan&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M402.57,-114.54C402.57,-102.08 402.57,-88.69 402.57,-76.5"/>
+<polygon fill="none" stroke="#334155" points="405.37,-76.54 402.57,-68.54 399.77,-76.54 405.37,-76.54"/>
+</g>
+<!-- Dispatch -->
+<g id="node5" class="node">
+<title>Dispatch</title>
+<polygon fill="#edf2f7" stroke="none" points="491.24,-172.6 491.24,-210.6 621.9,-210.6 621.9,-172.6 491.24,-172.6"/>
+<polygon fill="none" stroke="black" points="491.24,-172.6 491.24,-210.6 621.9,-210.6 621.9,-172.6 491.24,-172.6"/>
+<text xml:space="preserve" text-anchor="start" x="500.32" y="-193.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="533.34" y="-182.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Dispatch</text>
+<polygon fill="none" stroke="black" points="491.24,-143.4 491.24,-172.6 621.9,-172.6 621.9,-143.4 491.24,-143.4"/>
+<text xml:space="preserve" text-anchor="start" x="499.24" y="-153.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ channel: str or None</text>
+<polygon fill="none" stroke="black" points="491.24,-114.2 491.24,-143.4 621.9,-143.4 621.9,-114.2 491.24,-114.2"/>
+<text xml:space="preserve" text-anchor="start" x="499.24" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- Dispatch&#45;&gt;DataObject -->
+<g id="edge4" class="edge">
+<title>Dispatch&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M499.66,-114.54C483.02,-100.84 465.03,-86.03 449.11,-72.92"/>
+<polygon fill="none" stroke="#334155" points="451.08,-70.91 443.12,-67.99 447.52,-75.24 451.08,-70.91"/>
+</g>
+<!-- EvaluationRecord -->
+<g id="node6" class="node">
+<title>EvaluationRecord</title>
+<polygon fill="#edf2f7" stroke="none" points="641.78,-172.6 641.78,-210.6 791.36,-210.6 791.36,-172.6 641.78,-172.6"/>
+<polygon fill="none" stroke="black" points="641.78,-172.6 641.78,-210.6 791.36,-210.6 791.36,-172.6 641.78,-172.6"/>
+<text xml:space="preserve" text-anchor="start" x="660.32" y="-193.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="669.81" y="-182.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">EvaluationRecord</text>
+<polygon fill="none" stroke="black" points="641.78,-143.4 641.78,-172.6 791.36,-172.6 791.36,-143.4 641.78,-143.4"/>
+<text xml:space="preserve" text-anchor="start" x="649.78" y="-153.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ metric_name: str or None</text>
+<polygon fill="none" stroke="black" points="641.78,-114.2 641.78,-143.4 791.36,-143.4 791.36,-114.2 641.78,-114.2"/>
+<text xml:space="preserve" text-anchor="start" x="649.78" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ __post_init__(): None</text>
+</g>
+<!-- EvaluationRecord&#45;&gt;DataObject -->
+<g id="edge5" class="edge">
+<title>EvaluationRecord&#45;&gt;DataObject</title>
+<path fill="none" stroke="#334155" d="M641.84,-118.99C638.39,-117.32 634.96,-115.72 631.57,-114.2 593.44,-97.14 550.46,-81.34 512.12,-68.4"/>
+<polygon fill="none" stroke="#334155" points="513.41,-65.88 504.94,-65.99 511.63,-71.19 513.41,-65.88"/>
+</g>
+</g>
+</svg>
+<figcaption><a href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODI3cHQiIGhlaWdodD0iMjc2cHQiCiB2aWV3Qm94PSIwLjAwIDAuMDAgODI3LjAwIDI3Ni4wMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CjxnIGlkPSJncmFwaDAiIGNsYXNzPSJncmFwaCIgdHJhbnNmb3JtPSJzY2FsZSgxIDEpIHJvdGF0ZSgwKSB0cmFuc2xhdGUoMTggMjU4LjIpIj4KPHRpdGxlPlNBUjwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IndoaXRlIiBzdHJva2U9Im5vbmUiIHBvaW50cz0iLTE4LDE4IC0xOCwtMjU4LjIgODA5LjM2LC0yNTguMiA4MDkuMzYsMTggLTE4LDE4Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM5NS42OCIgeT0iLTIyMCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjE4LjAwIj4wMyBSZXNwb25zZSBhbmQgZXZhbHVhdGlvbiBvYmplY3RzIHwgZXhpc3Rpbmcgc2hhbGxvdyBoaWVyYXJjaHk8L3RleHQ+CjwhLS0gRGF0YU9iamVjdCAtLT4KPGcgaWQ9Im5vZGUxIiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5EYXRhT2JqZWN0PC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjMwMS40OCwtMjkuMiAzMDEuNDgsLTY3LjIgNTAzLjY2LC02Ny4yIDUwMy42NiwtMjkuMiAzMDEuNDgsLTI5LjIiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIzMDEuNDgsLTI5LjIgMzAxLjQ4LC02Ny4yIDUwMy42NiwtNjcuMiA1MDMuNjYsLTI5LjIgMzAxLjQ4LC0yOS4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMzI1LjUyIiB5PSItNTAuMyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDthYnN0cmFjdCwgc2VlIGRpYWdyYW0gMDEmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzNzMuNTMiIHk9Ii0zOS4zIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5EYXRhT2JqZWN0PC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjMwMS40OCwwIDMwMS40OCwtMjkuMiA1MDMuNjYsLTI5LjIgNTAzLjY2LDAgMzAxLjQ4LDAiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzMDkuNDgiIHk9Ii0xMC4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgY29tbW9uIGlkZW50aXR5LCBwYXlsb2FkLCBtZXRhZGF0YTwvdGV4dD4KPC9nPgo8IS0tIERlY2lzaW9uIC0tPgo8ZyBpZD0ibm9kZTIiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkRlY2lzaW9uPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjAsLTE3Mi42IDAsLTIxMC42IDE0Ny4xNCwtMjEwLjYgMTQ3LjE0LC0xNzIuNiAwLC0xNzIuNiIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTE3Mi42IDAsLTIxMC42IDE0Ny4xNCwtMjEwLjYgMTQ3LjE0LC0xNzIuNiAwLC0xNzIuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjE3LjMyIiB5PSItMTkzLjciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3Rpbmcgc3VidHlwZSZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjUwLjY1IiB5PSItMTgyLjciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPkRlY2lzaW9uPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTE0My40IDAsLTE3Mi42IDE0Ny4xNCwtMTcyLjYgMTQ3LjE0LC0xNDMuNCAwLC0xNDMuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0xNTMuNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHBvbGljeV9yZXN1bHQ6IHN0ciBvciBOb25lPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTExNC4yIDAsLTE0My40IDE0Ny4xNCwtMTQzLjQgMTQ3LjE0LC0xMTQuMiAwLC0xMTQuMiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0xMjQuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIF9fcG9zdF9pbml0X18oKTogTm9uZTwvdGV4dD4KPC9nPgo8IS0tIERlY2lzaW9uJiM0NTsmZ3Q7RGF0YU9iamVjdCAtLT4KPGcgaWQ9ImVkZ2UxIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5EZWNpc2lvbiYjNDU7Jmd0O0RhdGFPYmplY3Q8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIGQ9Ik0xNDYuOSwtMTE5LjExQzE1MC40OCwtMTE3LjM5IDE1NC4wNSwtMTE1Ljc0IDE1Ny41NywtMTE0LjIgMjAwLjY5LC05NS4zIDI0OS43NywtNzguNDkgMjkyLjYyLC02NS4yNCIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iMjkzLjM5LC02Ny45MyAzMDAuMjIsLTYyLjkxIDI5MS43NSwtNjIuNTggMjkzLjM5LC02Ny45MyIvPgo8L2c+CjwhLS0gSW50ZW50IC0tPgo8ZyBpZD0ibm9kZTMiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkludGVudDwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSIxNjcuMywtMTcyLjYgMTY3LjMsLTIxMC42IDMxMy44NCwtMjEwLjYgMzEzLjg0LC0xNzIuNiAxNjcuMywtMTcyLjYiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIxNjcuMywtMTcyLjYgMTY3LjMsLTIxMC42IDMxMy44NCwtMjEwLjYgMzEzLjg0LC0xNzIuNiAxNjcuMywtMTcyLjYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIxODQuMzIiIHk9Ii0xOTMuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtleGlzdGluZyBzdWJ0eXBlJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjI1LjYiIHk9Ii0xODIuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+SW50ZW50PC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjE2Ny4zLC0xNDMuNCAxNjcuMywtMTcyLjYgMzEzLjg0LC0xNzIuNiAzMTMuODQsLTE0My40IDE2Ny4zLC0xNDMuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjE3NS4zIiB5PSItMTUzLjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBpbnRlbnRfbmFtZTogc3RyIG9yIE5vbmU8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMTY3LjMsLTExNC4yIDE2Ny4zLC0xNDMuNCAzMTMuODQsLTE0My40IDMxMy44NCwtMTE0LjIgMTY3LjMsLTExNC4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTc1LjMiIHk9Ii0xMjQuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIF9fcG9zdF9pbml0X18oKTogTm9uZTwvdGV4dD4KPC9nPgo8IS0tIEludGVudCYjNDU7Jmd0O0RhdGFPYmplY3QgLS0+CjxnIGlkPSJlZGdlMiIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+SW50ZW50JiM0NTsmZ3Q7RGF0YU9iamVjdDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgZD0iTTMwMC40MywtMTE0LjU0QzMxOC4xLC0xMDAuNzIgMzM3LjIxLC04NS43NiAzNTQuMDYsLTcyLjU3Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgcG9pbnRzPSIzNTUuMzcsLTc1LjEgMzU5Ljk1LC02Ny45NiAzNTEuOTIsLTcwLjY5IDM1NS4zNywtNzUuMSIvPgo8L2c+CjwhLS0gRXhlY3V0aW9uUGxhbiAtLT4KPGcgaWQ9Im5vZGU0IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5FeGVjdXRpb25QbGFuPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjMzMy41OSwtMTcyLjYgMzMzLjU5LC0yMTAuNiA0NzEuNTUsLTIxMC42IDQ3MS41NSwtMTcyLjYgMzMzLjU5LC0xNzIuNiIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjMzMy41OSwtMTcyLjYgMzMzLjU5LC0yMTAuNiA0NzEuNTUsLTIxMC42IDQ3MS41NSwtMTcyLjYgMzMzLjU5LC0xNzIuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjM0Ni4zMiIgeT0iLTE5My43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIHN1YnR5cGUmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzNjQuNjciIHk9Ii0xODIuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+RXhlY3V0aW9uUGxhbjwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIzMzMuNTksLTE0My40IDMzMy41OSwtMTcyLjYgNDcxLjU1LC0xNzIuNiA0NzEuNTUsLTE0My40IDMzMy41OSwtMTQzLjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzNDEuNTkiIHk9Ii0xNTMuNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHN0ZXBzOiBsaXN0W2RpY3Rbc3RyLCBBbnldXTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIzMzMuNTksLTExNC4yIDMzMy41OSwtMTQzLjQgNDcxLjU1LC0xNDMuNCA0NzEuNTUsLTExNC4yIDMzMy41OSwtMTE0LjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIzNDEuNTkiIHk9Ii0xMjQuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIF9fcG9zdF9pbml0X18oKTogTm9uZTwvdGV4dD4KPC9nPgo8IS0tIEV4ZWN1dGlvblBsYW4mIzQ1OyZndDtEYXRhT2JqZWN0IC0tPgo8ZyBpZD0iZWRnZTMiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPkV4ZWN1dGlvblBsYW4mIzQ1OyZndDtEYXRhT2JqZWN0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNNDAyLjU3LC0xMTQuNTRDNDAyLjU3LC0xMDIuMDggNDAyLjU3LC04OC42OSA0MDIuNTcsLTc2LjUiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBwb2ludHM9IjQwNS4zNywtNzYuNTQgNDAyLjU3LC02OC41NCAzOTkuNzcsLTc2LjU0IDQwNS4zNywtNzYuNTQiLz4KPC9nPgo8IS0tIERpc3BhdGNoIC0tPgo8ZyBpZD0ibm9kZTUiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkRpc3BhdGNoPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjQ5MS4yNCwtMTcyLjYgNDkxLjI0LC0yMTAuNiA2MjEuOSwtMjEwLjYgNjIxLjksLTE3Mi42IDQ5MS4yNCwtMTcyLjYiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTEuMjQsLTE3Mi42IDQ5MS4yNCwtMjEwLjYgNjIxLjksLTIxMC42IDYyMS45LC0xNzIuNiA0OTEuMjQsLTE3Mi42Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTAwLjMyIiB5PSItMTkzLjciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3Rpbmcgc3VidHlwZSZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjUzMy4zNCIgeT0iLTE4Mi43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5EaXNwYXRjaDwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTEuMjQsLTE0My40IDQ5MS4yNCwtMTcyLjYgNjIxLjksLTE3Mi42IDYyMS45LC0xNDMuNCA0OTEuMjQsLTE0My40Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNDk5LjI0IiB5PSItMTUzLjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBjaGFubmVsOiBzdHIgb3IgTm9uZTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTEuMjQsLTExNC4yIDQ5MS4yNCwtMTQzLjQgNjIxLjksLTE0My40IDYyMS45LC0xMTQuMiA0OTEuMjQsLTExNC4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNDk5LjI0IiB5PSItMTI0LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBfX3Bvc3RfaW5pdF9fKCk6IE5vbmU8L3RleHQ+CjwvZz4KPCEtLSBEaXNwYXRjaCYjNDU7Jmd0O0RhdGFPYmplY3QgLS0+CjxnIGlkPSJlZGdlNCIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+RGlzcGF0Y2gmIzQ1OyZndDtEYXRhT2JqZWN0PC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNNDk5LjY2LC0xMTQuNTRDNDgzLjAyLC0xMDAuODQgNDY1LjAzLC04Ni4wMyA0NDkuMTEsLTcyLjkyIi8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgcG9pbnRzPSI0NTEuMDgsLTcwLjkxIDQ0My4xMiwtNjcuOTkgNDQ3LjUyLC03NS4yNCA0NTEuMDgsLTcwLjkxIi8+CjwvZz4KPCEtLSBFdmFsdWF0aW9uUmVjb3JkIC0tPgo8ZyBpZD0ibm9kZTYiIGNsYXNzPSJub2RlIj4KPHRpdGxlPkV2YWx1YXRpb25SZWNvcmQ8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iNjQxLjc4LC0xNzIuNiA2NDEuNzgsLTIxMC42IDc5MS4zNiwtMjEwLjYgNzkxLjM2LC0xNzIuNiA2NDEuNzgsLTE3Mi42Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNjQxLjc4LC0xNzIuNiA2NDEuNzgsLTIxMC42IDc5MS4zNiwtMjEwLjYgNzkxLjM2LC0xNzIuNiA2NDEuNzgsLTE3Mi42Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNjYwLjMyIiB5PSItMTkzLjciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3Rpbmcgc3VidHlwZSZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjY2OS44MSIgeT0iLTE4Mi43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5FdmFsdWF0aW9uUmVjb3JkPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjY0MS43OCwtMTQzLjQgNjQxLjc4LC0xNzIuNiA3OTEuMzYsLTE3Mi42IDc5MS4zNiwtMTQzLjQgNjQxLjc4LC0xNDMuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjY0OS43OCIgeT0iLTE1My42IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgbWV0cmljX25hbWU6IHN0ciBvciBOb25lPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjY0MS43OCwtMTE0LjIgNjQxLjc4LC0xNDMuNCA3OTEuMzYsLTE0My40IDc5MS4zNiwtMTE0LjIgNjQxLjc4LC0xMTQuMiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjY0OS43OCIgeT0iLTEyNC40IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgX19wb3N0X2luaXRfXygpOiBOb25lPC90ZXh0Pgo8L2c+CjwhLS0gRXZhbHVhdGlvblJlY29yZCYjNDU7Jmd0O0RhdGFPYmplY3QgLS0+CjxnIGlkPSJlZGdlNSIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+RXZhbHVhdGlvblJlY29yZCYjNDU7Jmd0O0RhdGFPYmplY3Q8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIGQ9Ik02NDEuODQsLTExOC45OUM2MzguMzksLTExNy4zMiA2MzQuOTYsLTExNS43MiA2MzEuNTcsLTExNC4yIDU5My40NCwtOTcuMTQgNTUwLjQ2LC04MS4zNCA1MTIuMTIsLTY4LjQiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBwb2ludHM9IjUxMy40MSwtNjUuODggNTA0Ljk0LC02NS45OSA1MTEuNjMsLTcxLjE5IDUxMy40MSwtNjUuODgiLz4KPC9nPgo8L2c+Cjwvc3ZnPgo=" download="03_response_objects.svg">Download this SVG diagram</a></figcaption></figure>
+<h3>9.4 Processing interfaces</h3>
+<figure><svg width="1002pt" height="498pt"
+ viewBox="0.00 0.00 1002.00 498.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 479.8)">
+<title>SAR</title>
+<polygon fill="white" stroke="none" points="-18,18 -18,-479.8 983.93,-479.8 983.93,18 -18,18"/>
+<text xml:space="preserve" text-anchor="middle" x="482.96" y="-441.6" font-family="Helvetica,sans-Serif" font-size="18.00">04 Processing components and capability interfaces | proposed boundaries</text>
+<!-- Stage -->
+<g id="node1" class="node">
+<title>Stage</title>
+<polygon fill="#edf2f7" stroke="none" points="34.26,-42.4 34.26,-80.4 206.48,-80.4 206.48,-42.4 34.26,-42.4"/>
+<polygon fill="none" stroke="black" points="34.26,-42.4 34.26,-80.4 206.48,-80.4 206.48,-42.4 34.26,-42.4"/>
+<text xml:space="preserve" text-anchor="start" x="58.63" y="-63.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="105.39" y="-52.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Stage</text>
+<polygon fill="none" stroke="black" points="34.26,0 34.26,-42.4 206.48,-42.4 206.48,0 34.26,0"/>
+<text xml:space="preserve" text-anchor="start" x="42.26" y="-23.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ accept_input(objects): bool</text>
+<text xml:space="preserve" text-anchor="start" x="42.26" y="-10.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ process(objects): StageResult</text>
+</g>
+<!-- StageComponent -->
+<g id="node2" class="node">
+<title>StageComponent</title>
+<polygon fill="#edf2f7" stroke="none" points="248.5,-251.6 248.5,-289.6 470.24,-289.6 470.24,-251.6 248.5,-251.6"/>
+<polygon fill="none" stroke="black" points="248.5,-251.6 248.5,-289.6 470.24,-289.6 470.24,-251.6 248.5,-251.6"/>
+<text xml:space="preserve" text-anchor="start" x="312.29" y="-272.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing ABC&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="313.84" y="-261.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">StageComponent</text>
+<polygon fill="none" stroke="black" points="248.5,-209.2 248.5,-251.6 470.24,-251.6 470.24,-209.2 248.5,-209.2"/>
+<text xml:space="preserve" text-anchor="start" x="256.5" y="-232.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ stage_name: str</text>
+<text xml:space="preserve" text-anchor="start" x="256.5" y="-219.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ telemetry: TelemetryEmitter or None</text>
+<polygon fill="none" stroke="black" points="248.5,-140.4 248.5,-209.2 470.24,-209.2 470.24,-140.4 248.5,-140.4"/>
+<text xml:space="preserve" text-anchor="start" x="256.5" y="-190.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ accept_input(objects): bool {abstract}</text>
+<text xml:space="preserve" text-anchor="start" x="256.5" y="-177" font-family="Helvetica,sans-Serif" font-size="11.00">+ process(objects): StageResult {abstract}</text>
+<text xml:space="preserve" text-anchor="start" x="256.5" y="-163.8" font-family="Helvetica,sans-Serif" font-size="11.00"># _emit_received / transformed / sent()</text>
+<text xml:space="preserve" text-anchor="start" x="256.5" y="-150.6" font-family="Helvetica,sans-Serif" font-size="11.00"># _emit_error / indeterminate()</text>
+</g>
+<!-- StageComponent&#45;&gt;Stage -->
+<g id="edge1" class="edge">
+<title>StageComponent&#45;&gt;Stage</title>
+<path fill="none" stroke="#334155" stroke-dasharray="5,2" d="M265.47,-140.52C249.25,-128.26 232.43,-115.82 216.37,-104.4 207.6,-98.17 198.27,-91.76 189,-85.52"/>
+<polygon fill="none" stroke="#334155" points="190.71,-83.29 182.5,-81.17 187.59,-87.95 190.71,-83.29"/>
+<text xml:space="preserve" text-anchor="middle" x="275.85" y="-107.4" font-family="Helvetica,sans-Serif" font-size="10.00">structurally satisfies</text>
+</g>
+<!-- TelemetryEmitter -->
+<g id="node4" class="node">
+<title>TelemetryEmitter</title>
+<polygon fill="#edf2f7" stroke="none" points="230.56,-42.4 230.56,-80.4 476.17,-80.4 476.17,-42.4 230.56,-42.4"/>
+<polygon fill="none" stroke="black" points="230.56,-42.4 230.56,-80.4 476.17,-80.4 476.17,-42.4 230.56,-42.4"/>
+<text xml:space="preserve" text-anchor="start" x="295.9" y="-63.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="308.43" y="-52.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">TelemetryEmitter</text>
+<polygon fill="none" stroke="black" points="230.56,0 230.56,-42.4 476.17,-42.4 476.17,0 230.56,0"/>
+<text xml:space="preserve" text-anchor="start" x="238.56" y="-23.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ emit_status(stage, status, message): None</text>
+<text xml:space="preserve" text-anchor="start" x="238.56" y="-10.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ emit_trace(stage, in_count, out_count): None</text>
+</g>
+<!-- StageComponent&#45;&gt;TelemetryEmitter -->
+<g id="edge3" class="edge">
+<title>StageComponent&#45;&gt;TelemetryEmitter</title>
+<path fill="none" stroke="#334155" d="M356.82,-140.47C356.21,-123.11 355.59,-105.05 355.03,-89.16"/>
+<polygon fill="#334155" stroke="#334155" points="354.76,-81.3 358.64,-89.17 354.86,-84.08 355.04,-89.3 355.04,-89.3 355.04,-89.3 354.86,-84.08 351.44,-89.42 354.76,-81.3"/>
+<text xml:space="preserve" text-anchor="middle" x="398.91" y="-107.4" font-family="Helvetica,sans-Serif" font-size="10.00">telemetry reference</text>
+<text xml:space="preserve" text-anchor="middle" x="346.38" y="-83.08" font-family="Helvetica,sans-Serif" font-size="10.00">0..1</text>
+</g>
+<!-- L1AcquisitionStage -->
+<g id="node3" class="node">
+<title>L1AcquisitionStage</title>
+<polygon fill="#edf2f7" stroke="none" points="498.71,-394.2 498.71,-432.2 692.03,-432.2 692.03,-394.2 498.71,-394.2"/>
+<polygon fill="none" stroke="black" points="498.71,-394.2 498.71,-432.2 692.03,-432.2 692.03,-394.2 498.71,-394.2"/>
+<text xml:space="preserve" text-anchor="start" x="506.71" y="-415.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing representative stage&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="544.03" y="-404.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">L1AcquisitionStage</text>
+<polygon fill="none" stroke="black" points="498.71,-338.6 498.71,-394.2 692.03,-394.2 692.03,-338.6 498.71,-338.6"/>
+<text xml:space="preserve" text-anchor="start" x="506.71" y="-375.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ ingest_node_id: str</text>
+<text xml:space="preserve" text-anchor="start" x="506.71" y="-362" font-family="Helvetica,sans-Serif" font-size="11.00">+ raw_store: RawStore or None</text>
+<text xml:space="preserve" text-anchor="start" x="506.71" y="-348.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ default_source_latency_ms: float</text>
+</g>
+<!-- L1AcquisitionStage&#45;&gt;StageComponent -->
+<g id="edge2" class="edge">
+<title>L1AcquisitionStage&#45;&gt;StageComponent</title>
+<path fill="none" stroke="#334155" d="M531.19,-338.61C512.23,-325.07 490.9,-309.86 469.9,-294.87"/>
+<polygon fill="none" stroke="#334155" points="471.55,-292.61 463.41,-290.24 468.29,-297.16 471.55,-292.61"/>
+</g>
+<!-- RawStore -->
+<g id="node6" class="node">
+<title>RawStore</title>
+<polygon fill="#edf2f7" stroke="none" points="692.81,-35.8 692.81,-73.8 965.93,-73.8 965.93,-35.8 692.81,-35.8"/>
+<polygon fill="none" stroke="black" points="692.81,-35.8 692.81,-73.8 965.93,-73.8 965.93,-35.8 692.81,-35.8"/>
+<text xml:space="preserve" text-anchor="start" x="771.9" y="-56.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="804" y="-45.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">RawStore</text>
+<polygon fill="none" stroke="black" points="692.81,-6.6 692.81,-35.8 965.93,-35.8 965.93,-6.6 692.81,-6.6"/>
+<text xml:space="preserve" text-anchor="start" x="700.81" y="-16.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ store_payload(source_id, payload): RawReference</text>
+</g>
+<!-- L1AcquisitionStage&#45;&gt;RawStore -->
+<g id="edge6" class="edge">
+<title>L1AcquisitionStage&#45;&gt;RawStore</title>
+<path fill="none" stroke="#334155" d="M636.82,-338.8C649.98,-323.56 664.26,-306.22 676.37,-289.6 727.5,-219.41 778.77,-131.82 807.06,-81.62"/>
+<polygon fill="#334155" stroke="#334155" points="810.97,-74.65 810.19,-83.39 809.61,-77.08 807.05,-81.63 807.05,-81.63 807.05,-81.63 809.61,-77.08 803.91,-79.86 810.97,-74.65"/>
+<text xml:space="preserve" text-anchor="middle" x="810.78" y="-212" font-family="Helvetica,sans-Serif" font-size="10.00">storage reference</text>
+<text xml:space="preserve" text-anchor="middle" x="803.23" y="-76.59" font-family="Helvetica,sans-Serif" font-size="10.00">0..1</text>
+</g>
+<!-- O1ObservabilityComponent -->
+<g id="node5" class="node">
+<title>O1ObservabilityComponent</title>
+<polygon fill="#edf2f7" stroke="none" points="498.57,-238.4 498.57,-276.4 666.17,-276.4 666.17,-238.4 498.57,-238.4"/>
+<polygon fill="none" stroke="black" points="498.57,-238.4 498.57,-276.4 666.17,-276.4 666.17,-238.4 498.57,-238.4"/>
+<text xml:space="preserve" text-anchor="start" x="506.57" y="-259.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing implementation&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="509.63" y="-248.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">O1ObservabilityComponent</text>
+<polygon fill="none" stroke="black" points="498.57,-196 498.57,-238.4 666.17,-238.4 666.17,-196 498.57,-196"/>
+<text xml:space="preserve" text-anchor="start" x="506.57" y="-219.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ records: list[LogRecord]</text>
+<text xml:space="preserve" text-anchor="start" x="506.57" y="-206.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ sinks: list[LogSink]</text>
+<polygon fill="none" stroke="black" points="498.57,-153.6 498.57,-196 666.17,-196 666.17,-153.6 498.57,-153.6"/>
+<text xml:space="preserve" text-anchor="start" x="506.57" y="-177" font-family="Helvetica,sans-Serif" font-size="11.00">+ emit_status(...)</text>
+<text xml:space="preserve" text-anchor="start" x="506.57" y="-163.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ emit_trace(...)</text>
+</g>
+<!-- O1ObservabilityComponent&#45;&gt;TelemetryEmitter -->
+<g id="edge4" class="edge">
+<title>O1ObservabilityComponent&#45;&gt;TelemetryEmitter</title>
+<path fill="none" stroke="#334155" stroke-dasharray="5,2" d="M510.45,-153.62C490.33,-137.28 468.24,-119.84 447.37,-104.4 438.85,-98.1 429.75,-91.64 420.69,-85.39"/>
+<polygon fill="none" stroke="#334155" points="422.53,-83.26 414.35,-81.04 419.36,-87.87 422.53,-83.26"/>
+</g>
+<!-- LogSink -->
+<g id="node7" class="node">
+<title>LogSink</title>
+<polygon fill="#edf2f7" stroke="none" points="495.82,-35.8 495.82,-73.8 672.92,-73.8 672.92,-35.8 495.82,-35.8"/>
+<polygon fill="none" stroke="black" points="495.82,-35.8 495.82,-73.8 672.92,-73.8 672.92,-35.8 495.82,-35.8"/>
+<text xml:space="preserve" text-anchor="start" x="526.9" y="-56.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="562.68" y="-45.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">LogSink</text>
+<polygon fill="none" stroke="black" points="495.82,-6.6 495.82,-35.8 672.92,-35.8 672.92,-6.6 495.82,-6.6"/>
+<text xml:space="preserve" text-anchor="start" x="503.82" y="-16.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ emit(record: LogRecord): None</text>
+</g>
+<!-- O1ObservabilityComponent&#45;&gt;LogSink -->
+<g id="edge5" class="edge">
+<title>O1ObservabilityComponent&#45;&gt;LogSink</title>
+<path fill="none" stroke="#334155" d="M583.06,-154.05C583.34,-130.44 583.64,-103.92 583.89,-82.52"/>
+<polygon fill="#334155" stroke="#334155" points="583.98,-74.61 587.49,-82.65 583.95,-77.39 583.89,-82.61 583.89,-82.61 583.89,-82.61 583.95,-77.39 580.29,-82.56 583.98,-74.61"/>
+<text xml:space="preserve" text-anchor="middle" x="595" y="-107.4" font-family="Helvetica,sans-Serif" font-size="10.00">sinks</text>
+<text xml:space="preserve" text-anchor="middle" x="576.49" y="-76.39" font-family="Helvetica,sans-Serif" font-size="10.00">0..*</text>
+</g>
+<!-- SarPipeline -->
+<g id="node8" class="node">
+<title>SarPipeline</title>
+<polygon fill="#edf2f7" stroke="none" points="0,-231.8 0,-269.8 228.74,-269.8 228.74,-231.8 0,-231.8"/>
+<polygon fill="none" stroke="black" points="0,-231.8 0,-269.8 228.74,-269.8 228.74,-231.8 0,-231.8"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-252.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing assembly, typing proposed&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="84.41" y="-241.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">SarPipeline</text>
+<polygon fill="none" stroke="black" points="0,-189.4 0,-231.8 228.74,-231.8 228.74,-189.4 0,-189.4"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-212.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ l1 through l5b: Stage</text>
+<text xml:space="preserve" text-anchor="start" x="8" y="-199.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ o1: observer or None</text>
+<polygon fill="none" stroke="black" points="0,-160.2 0,-189.4 228.74,-189.4 228.74,-160.2 0,-160.2"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-170.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ run(seed): PipelineRunResult</text>
+</g>
+<!-- SarPipeline&#45;&gt;Stage -->
+<g id="edge7" class="edge">
+<title>SarPipeline&#45;&gt;Stage</title>
+<path fill="none" stroke="#334155" d="M116.17,-160.2C116.77,-142.44 117.45,-122.57 118.09,-104.4 118.26,-99.53 118.44,-94.45 118.62,-89.38"/>
+<polygon fill="#334155" stroke="#334155" points="118.9,-81.52 122.21,-89.65 118.8,-84.3 118.62,-89.52 118.62,-89.52 118.62,-89.52 118.8,-84.3 115.02,-89.39 118.9,-81.52"/>
+<text xml:space="preserve" text-anchor="middle" x="166.73" y="-107.4" font-family="Helvetica,sans-Serif" font-size="10.00">configured stage slots</text>
+<text xml:space="preserve" text-anchor="middle" x="116.16" y="-83.31" font-family="Helvetica,sans-Serif" font-size="10.00">7</text>
+</g>
+</g>
+</svg>
+<figcaption><a href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMnB0IiBoZWlnaHQ9IjQ5OHB0Igogdmlld0JveD0iMC4wMCAwLjAwIDEwMDIuMDAgNDk4LjAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KPGcgaWQ9ImdyYXBoMCIgY2xhc3M9ImdyYXBoIiB0cmFuc2Zvcm09InNjYWxlKDEgMSkgcm90YXRlKDApIHRyYW5zbGF0ZSgxOCA0NzkuOCkiPgo8dGl0bGU+U0FSPC90aXRsZT4KPHBvbHlnb24gZmlsbD0id2hpdGUiIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSItMTgsMTggLTE4LC00NzkuOCA5ODMuOTMsLTQ3OS44IDk4My45MywxOCAtMTgsMTgiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNDgyLjk2IiB5PSItNDQxLjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxOC4wMCI+MDQgUHJvY2Vzc2luZyBjb21wb25lbnRzIGFuZCBjYXBhYmlsaXR5IGludGVyZmFjZXMgfCBwcm9wb3NlZCBib3VuZGFyaWVzPC90ZXh0Pgo8IS0tIFN0YWdlIC0tPgo8ZyBpZD0ibm9kZTEiIGNsYXNzPSJub2RlIj4KPHRpdGxlPlN0YWdlPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjM0LjI2LC00Mi40IDM0LjI2LC04MC40IDIwNi40OCwtODAuNCAyMDYuNDgsLTQyLjQgMzQuMjYsLTQyLjQiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIzNC4yNiwtNDIuNCAzNC4yNiwtODAuNCAyMDYuNDgsLTgwLjQgMjA2LjQ4LC00Mi40IDM0LjI2LC00Mi40Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTguNjMiIHk9Ii02My41IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O3Byb3Bvc2VkIFByb3RvY29sJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTA1LjM5IiB5PSItNTIuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+U3RhZ2U8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMzQuMjYsMCAzNC4yNiwtNDIuNCAyMDYuNDgsLTQyLjQgMjA2LjQ4LDAgMzQuMjYsMCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjQyLjI2IiB5PSItMjMuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGFjY2VwdF9pbnB1dChvYmplY3RzKTogYm9vbDwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI0Mi4yNiIgeT0iLTEwLjIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBwcm9jZXNzKG9iamVjdHMpOiBTdGFnZVJlc3VsdDwvdGV4dD4KPC9nPgo8IS0tIFN0YWdlQ29tcG9uZW50IC0tPgo8ZyBpZD0ibm9kZTIiIGNsYXNzPSJub2RlIj4KPHRpdGxlPlN0YWdlQ29tcG9uZW50PC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjI0OC41LC0yNTEuNiAyNDguNSwtMjg5LjYgNDcwLjI0LC0yODkuNiA0NzAuMjQsLTI1MS42IDI0OC41LC0yNTEuNiIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjI0OC41LC0yNTEuNiAyNDguNSwtMjg5LjYgNDcwLjI0LC0yODkuNiA0NzAuMjQsLTI1MS42IDI0OC41LC0yNTEuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjMxMi4yOSIgeT0iLTI3Mi43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIEFCQyZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjMxMy44NCIgeT0iLTI2MS43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5TdGFnZUNvbXBvbmVudDwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIyNDguNSwtMjA5LjIgMjQ4LjUsLTI1MS42IDQ3MC4yNCwtMjUxLjYgNDcwLjI0LC0yMDkuMiAyNDguNSwtMjA5LjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyNTYuNSIgeT0iLTIzMi42IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgc3RhZ2VfbmFtZTogc3RyPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI1Ni41IiB5PSItMjE5LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyB0ZWxlbWV0cnk6IFRlbGVtZXRyeUVtaXR0ZXIgb3IgTm9uZTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIyNDguNSwtMTQwLjQgMjQ4LjUsLTIwOS4yIDQ3MC4yNCwtMjA5LjIgNDcwLjI0LC0xNDAuNCAyNDguNSwtMTQwLjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyNTYuNSIgeT0iLTE5MC4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgYWNjZXB0X2lucHV0KG9iamVjdHMpOiBib29sIHthYnN0cmFjdH08L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjU2LjUiIHk9Ii0xNzciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBwcm9jZXNzKG9iamVjdHMpOiBTdGFnZVJlc3VsdCB7YWJzdHJhY3R9PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI1Ni41IiB5PSItMTYzLjgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+IyBfZW1pdF9yZWNlaXZlZCAvIHRyYW5zZm9ybWVkIC8gc2VudCgpPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI1Ni41IiB5PSItMTUwLjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+IyBfZW1pdF9lcnJvciAvIGluZGV0ZXJtaW5hdGUoKTwvdGV4dD4KPC9nPgo8IS0tIFN0YWdlQ29tcG9uZW50JiM0NTsmZ3Q7U3RhZ2UgLS0+CjxnIGlkPSJlZGdlMSIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+U3RhZ2VDb21wb25lbnQmIzQ1OyZndDtTdGFnZTwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNMjY1LjQ3LC0xNDAuNTJDMjQ5LjI1LC0xMjguMjYgMjMyLjQzLC0xMTUuODIgMjE2LjM3LC0xMDQuNCAyMDcuNiwtOTguMTcgMTk4LjI3LC05MS43NiAxODksLTg1LjUyIi8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgcG9pbnRzPSIxOTAuNzEsLTgzLjI5IDE4Mi41LC04MS4xNyAxODcuNTksLTg3Ljk1IDE5MC43MSwtODMuMjkiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjc1Ljg1IiB5PSItMTA3LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+c3RydWN0dXJhbGx5IHNhdGlzZmllczwvdGV4dD4KPC9nPgo8IS0tIFRlbGVtZXRyeUVtaXR0ZXIgLS0+CjxnIGlkPSJub2RlNCIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+VGVsZW1ldHJ5RW1pdHRlcjwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSIyMzAuNTYsLTQyLjQgMjMwLjU2LC04MC40IDQ3Ni4xNywtODAuNCA0NzYuMTcsLTQyLjQgMjMwLjU2LC00Mi40Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMjMwLjU2LC00Mi40IDIzMC41NiwtODAuNCA0NzYuMTcsLTgwLjQgNDc2LjE3LC00Mi40IDIzMC41NiwtNDIuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjI5NS45IiB5PSItNjMuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtleGlzdGluZyBQcm90b2NvbCZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjMwOC40MyIgeT0iLTUyLjUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPlRlbGVtZXRyeUVtaXR0ZXI8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMjMwLjU2LDAgMjMwLjU2LC00Mi40IDQ3Ni4xNywtNDIuNCA0NzYuMTcsMCAyMzAuNTYsMCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjIzOC41NiIgeT0iLTIzLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBlbWl0X3N0YXR1cyhzdGFnZSwgc3RhdHVzLCBtZXNzYWdlKTogTm9uZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyMzguNTYiIHk9Ii0xMC4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgZW1pdF90cmFjZShzdGFnZSwgaW5fY291bnQsIG91dF9jb3VudCk6IE5vbmU8L3RleHQ+CjwvZz4KPCEtLSBTdGFnZUNvbXBvbmVudCYjNDU7Jmd0O1RlbGVtZXRyeUVtaXR0ZXIgLS0+CjxnIGlkPSJlZGdlMyIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+U3RhZ2VDb21wb25lbnQmIzQ1OyZndDtUZWxlbWV0cnlFbWl0dGVyPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNMzU2LjgyLC0xNDAuNDdDMzU2LjIxLC0xMjMuMTEgMzU1LjU5LC0xMDUuMDUgMzU1LjAzLC04OS4xNiIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iMzU0Ljc2LC04MS4zIDM1OC42NCwtODkuMTcgMzU0Ljg2LC04NC4wOCAzNTUuMDQsLTg5LjMgMzU1LjA0LC04OS4zIDM1NS4wNCwtODkuMyAzNTQuODYsLTg0LjA4IDM1MS40NCwtODkuNDIgMzU0Ljc2LC04MS4zIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM5OC45MSIgeT0iLTEwNy40IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPnRlbGVtZXRyeSByZWZlcmVuY2U8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjM0Ni4zOCIgeT0iLTgzLjA4IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPjAuLjE8L3RleHQ+CjwvZz4KPCEtLSBMMUFjcXVpc2l0aW9uU3RhZ2UgLS0+CjxnIGlkPSJub2RlMyIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+TDFBY3F1aXNpdGlvblN0YWdlPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjQ5OC43MSwtMzk0LjIgNDk4LjcxLC00MzIuMiA2OTIuMDMsLTQzMi4yIDY5Mi4wMywtMzk0LjIgNDk4LjcxLC0zOTQuMiIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjQ5OC43MSwtMzk0LjIgNDk4LjcxLC00MzIuMiA2OTIuMDMsLTQzMi4yIDY5Mi4wMywtMzk0LjIgNDk4LjcxLC0zOTQuMiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjUwNi43MSIgeT0iLTQxNS4zIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIHJlcHJlc2VudGF0aXZlIHN0YWdlJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTQ0LjAzIiB5PSItNDA0LjMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPkwxQWNxdWlzaXRpb25TdGFnZTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTguNzEsLTMzOC42IDQ5OC43MSwtMzk0LjIgNjkyLjAzLC0zOTQuMiA2OTIuMDMsLTMzOC42IDQ5OC43MSwtMzM4LjYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI1MDYuNzEiIHk9Ii0zNzUuMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGluZ2VzdF9ub2RlX2lkOiBzdHI8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTA2LjcxIiB5PSItMzYyIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgcmF3X3N0b3JlOiBSYXdTdG9yZSBvciBOb25lPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjUwNi43MSIgeT0iLTM0OC44IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgZGVmYXVsdF9zb3VyY2VfbGF0ZW5jeV9tczogZmxvYXQ8L3RleHQ+CjwvZz4KPCEtLSBMMUFjcXVpc2l0aW9uU3RhZ2UmIzQ1OyZndDtTdGFnZUNvbXBvbmVudCAtLT4KPGcgaWQ9ImVkZ2UyIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5MMUFjcXVpc2l0aW9uU3RhZ2UmIzQ1OyZndDtTdGFnZUNvbXBvbmVudDwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgZD0iTTUzMS4xOSwtMzM4LjYxQzUxMi4yMywtMzI1LjA3IDQ5MC45LC0zMDkuODYgNDY5LjksLTI5NC44NyIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNDcxLjU1LC0yOTIuNjEgNDYzLjQxLC0yOTAuMjQgNDY4LjI5LC0yOTcuMTYgNDcxLjU1LC0yOTIuNjEiLz4KPC9nPgo8IS0tIFJhd1N0b3JlIC0tPgo8ZyBpZD0ibm9kZTYiIGNsYXNzPSJub2RlIj4KPHRpdGxlPlJhd1N0b3JlPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjY5Mi44MSwtMzUuOCA2OTIuODEsLTczLjggOTY1LjkzLC03My44IDk2NS45MywtMzUuOCA2OTIuODEsLTM1LjgiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI2OTIuODEsLTM1LjggNjkyLjgxLC03My44IDk2NS45MywtNzMuOCA5NjUuOTMsLTM1LjggNjkyLjgxLC0zNS44Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNzcxLjkiIHk9Ii01Ni45IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIFByb3RvY29sJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iODA0IiB5PSItNDUuOSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+UmF3U3RvcmU8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNjkyLjgxLC02LjYgNjkyLjgxLC0zNS44IDk2NS45MywtMzUuOCA5NjUuOTMsLTYuNiA2OTIuODEsLTYuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjcwMC44MSIgeT0iLTE2LjgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBzdG9yZV9wYXlsb2FkKHNvdXJjZV9pZCwgcGF5bG9hZCk6IFJhd1JlZmVyZW5jZTwvdGV4dD4KPC9nPgo8IS0tIEwxQWNxdWlzaXRpb25TdGFnZSYjNDU7Jmd0O1Jhd1N0b3JlIC0tPgo8ZyBpZD0iZWRnZTYiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPkwxQWNxdWlzaXRpb25TdGFnZSYjNDU7Jmd0O1Jhd1N0b3JlPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNNjM2LjgyLC0zMzguOEM2NDkuOTgsLTMyMy41NiA2NjQuMjYsLTMwNi4yMiA2NzYuMzcsLTI4OS42IDcyNy41LC0yMTkuNDEgNzc4Ljc3LC0xMzEuODIgODA3LjA2LC04MS42MiIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iODEwLjk3LC03NC42NSA4MTAuMTksLTgzLjM5IDgwOS42MSwtNzcuMDggODA3LjA1LC04MS42MyA4MDcuMDUsLTgxLjYzIDgwNy4wNSwtODEuNjMgODA5LjYxLC03Ny4wOCA4MDMuOTEsLTc5Ljg2IDgxMC45NywtNzQuNjUiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iODEwLjc4IiB5PSItMjEyIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPnN0b3JhZ2UgcmVmZXJlbmNlPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI4MDMuMjMiIHk9Ii03Ni41OSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjEwLjAwIj4wLi4xPC90ZXh0Pgo8L2c+CjwhLS0gTzFPYnNlcnZhYmlsaXR5Q29tcG9uZW50IC0tPgo8ZyBpZD0ibm9kZTUiIGNsYXNzPSJub2RlIj4KPHRpdGxlPk8xT2JzZXJ2YWJpbGl0eUNvbXBvbmVudDwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSI0OTguNTcsLTIzOC40IDQ5OC41NywtMjc2LjQgNjY2LjE3LC0yNzYuNCA2NjYuMTcsLTIzOC40IDQ5OC41NywtMjM4LjQiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTguNTcsLTIzOC40IDQ5OC41NywtMjc2LjQgNjY2LjE3LC0yNzYuNCA2NjYuMTcsLTIzOC40IDQ5OC41NywtMjM4LjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI1MDYuNTciIHk9Ii0yNTkuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtleGlzdGluZyBpbXBsZW1lbnRhdGlvbiZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjUwOS42MyIgeT0iLTI0OC41IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5PMU9ic2VydmFiaWxpdHlDb21wb25lbnQ8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNDk4LjU3LC0xOTYgNDk4LjU3LC0yMzguNCA2NjYuMTcsLTIzOC40IDY2Ni4xNywtMTk2IDQ5OC41NywtMTk2Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTA2LjU3IiB5PSItMjE5LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyByZWNvcmRzOiBsaXN0W0xvZ1JlY29yZF08L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTA2LjU3IiB5PSItMjA2LjIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBzaW5rczogbGlzdFtMb2dTaW5rXTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTguNTcsLTE1My42IDQ5OC41NywtMTk2IDY2Ni4xNywtMTk2IDY2Ni4xNywtMTUzLjYgNDk4LjU3LC0xNTMuNiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjUwNi41NyIgeT0iLTE3NyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGVtaXRfc3RhdHVzKC4uLik8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTA2LjU3IiB5PSItMTYzLjgiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBlbWl0X3RyYWNlKC4uLik8L3RleHQ+CjwvZz4KPCEtLSBPMU9ic2VydmFiaWxpdHlDb21wb25lbnQmIzQ1OyZndDtUZWxlbWV0cnlFbWl0dGVyIC0tPgo8ZyBpZD0iZWRnZTQiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPk8xT2JzZXJ2YWJpbGl0eUNvbXBvbmVudCYjNDU7Jmd0O1RlbGVtZXRyeUVtaXR0ZXI8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMiIgZD0iTTUxMC40NSwtMTUzLjYyQzQ5MC4zMywtMTM3LjI4IDQ2OC4yNCwtMTE5Ljg0IDQ0Ny4zNywtMTA0LjQgNDM4Ljg1LC05OC4xIDQyOS43NSwtOTEuNjQgNDIwLjY5LC04NS4zOSIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNDIyLjUzLC04My4yNiA0MTQuMzUsLTgxLjA0IDQxOS4zNiwtODcuODcgNDIyLjUzLC04My4yNiIvPgo8L2c+CjwhLS0gTG9nU2luayAtLT4KPGcgaWQ9Im5vZGU3IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5Mb2dTaW5rPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjQ5NS44MiwtMzUuOCA0OTUuODIsLTczLjggNjcyLjkyLC03My44IDY3Mi45MiwtMzUuOCA0OTUuODIsLTM1LjgiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTUuODIsLTM1LjggNDk1LjgyLC03My44IDY3Mi45MiwtNzMuOCA2NzIuOTIsLTM1LjggNDk1LjgyLC0zNS44Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTI2LjkiIHk9Ii01Ni45IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O2V4aXN0aW5nIFByb3RvY29sJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTYyLjY4IiB5PSItNDUuOSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+TG9nU2luazwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI0OTUuODIsLTYuNiA0OTUuODIsLTM1LjggNjcyLjkyLC0zNS44IDY3Mi45MiwtNi42IDQ5NS44MiwtNi42Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNTAzLjgyIiB5PSItMTYuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGVtaXQocmVjb3JkOiBMb2dSZWNvcmQpOiBOb25lPC90ZXh0Pgo8L2c+CjwhLS0gTzFPYnNlcnZhYmlsaXR5Q29tcG9uZW50JiM0NTsmZ3Q7TG9nU2luayAtLT4KPGcgaWQ9ImVkZ2U1IiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5PMU9ic2VydmFiaWxpdHlDb21wb25lbnQmIzQ1OyZndDtMb2dTaW5rPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNNTgzLjA2LC0xNTQuMDVDNTgzLjM0LC0xMzAuNDQgNTgzLjY0LC0xMDMuOTIgNTgzLjg5LC04Mi41MiIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNTgzLjk4LC03NC42MSA1ODcuNDksLTgyLjY1IDU4My45NSwtNzcuMzkgNTgzLjg5LC04Mi42MSA1ODMuODksLTgyLjYxIDU4My44OSwtODIuNjEgNTgzLjk1LC03Ny4zOSA1ODAuMjksLTgyLjU2IDU4My45OCwtNzQuNjEiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iNTk1IiB5PSItMTA3LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+c2lua3M8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjU3Ni40OSIgeT0iLTc2LjM5IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPjAuLio8L3RleHQ+CjwvZz4KPCEtLSBTYXJQaXBlbGluZSAtLT4KPGcgaWQ9Im5vZGU4IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5TYXJQaXBlbGluZTwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSIwLC0yMzEuOCAwLC0yNjkuOCAyMjguNzQsLTI2OS44IDIyOC43NCwtMjMxLjggMCwtMjMxLjgiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIwLC0yMzEuOCAwLC0yNjkuOCAyMjguNzQsLTI2OS44IDIyOC43NCwtMjMxLjggMCwtMjMxLjgiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI4IiB5PSItMjUyLjkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3RpbmcgYXNzZW1ibHksIHR5cGluZyBwcm9wb3NlZCZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9Ijg0LjQxIiB5PSItMjQxLjkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPlNhclBpcGVsaW5lPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTE4OS40IDAsLTIzMS44IDIyOC43NCwtMjMxLjggMjI4Ljc0LC0xODkuNCAwLC0xODkuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0yMTIuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGwxIHRocm91Z2ggbDViOiBTdGFnZTwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI4IiB5PSItMTk5LjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBvMTogb2JzZXJ2ZXIgb3IgTm9uZTwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIwLC0xNjAuMiAwLC0xODkuNCAyMjguNzQsLTE4OS40IDIyOC43NCwtMTYwLjIgMCwtMTYwLjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI4IiB5PSItMTcwLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBydW4oc2VlZCk6IFBpcGVsaW5lUnVuUmVzdWx0PC90ZXh0Pgo8L2c+CjwhLS0gU2FyUGlwZWxpbmUmIzQ1OyZndDtTdGFnZSAtLT4KPGcgaWQ9ImVkZ2U3IiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5TYXJQaXBlbGluZSYjNDU7Jmd0O1N0YWdlPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNMTE2LjE3LC0xNjAuMkMxMTYuNzcsLTE0Mi40NCAxMTcuNDUsLTEyMi41NyAxMTguMDksLTEwNC40IDExOC4yNiwtOTkuNTMgMTE4LjQ0LC05NC40NSAxMTguNjIsLTg5LjM4Ii8+Cjxwb2x5Z29uIGZpbGw9IiMzMzQxNTUiIHN0cm9rZT0iIzMzNDE1NSIgcG9pbnRzPSIxMTguOSwtODEuNTIgMTIyLjIxLC04OS42NSAxMTguOCwtODQuMyAxMTguNjIsLTg5LjUyIDExOC42MiwtODkuNTIgMTE4LjYyLC04OS41MiAxMTguOCwtODQuMyAxMTUuMDIsLTg5LjM5IDExOC45LC04MS41MiIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxNjYuNzMiIHk9Ii0xMDcuNCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjEwLjAwIj5jb25maWd1cmVkIHN0YWdlIHNsb3RzPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSIxMTYuMTYiIHk9Ii04My4zMSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjEwLjAwIj43PC90ZXh0Pgo8L2c+CjwvZz4KPC9zdmc+Cg==" download="04_processing_interfaces.svg">Download this SVG diagram</a></figcaption></figure>
+<p>Only L1 is expanded as a representative built-in stage. The pipeline still has its seven configured stage slots. O1 realizes a telemetry interface, not DataObject. The diagram does not imply seven distinct stage instances are mandatory if a reviewed implementation reuses a stage.</p>
+<h3>9.5 Modality composition</h3>
+<figure><svg width="1142pt" height="355pt"
+ viewBox="0.00 0.00 1142.00 355.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 337.2)">
+<title>SAR</title>
+<polygon fill="white" stroke="none" points="-18,18 -18,-337.2 1123.98,-337.2 1123.98,18 -18,18"/>
+<text xml:space="preserve" text-anchor="middle" x="552.99" y="-299" font-family="Helvetica,sans-Serif" font-size="18.00">05 Modality extension by validation and adaptation | proposed, not implemented</text>
+<!-- EdgeFrame -->
+<g id="node1" class="node">
+<title>EdgeFrame</title>
+<polygon fill="#edf2f7" stroke="none" points="184.14,-82 184.14,-120 365.8,-120 365.8,-82 184.14,-82"/>
+<polygon fill="none" stroke="black" points="184.14,-82 184.14,-120 365.8,-120 365.8,-82 184.14,-82"/>
+<text xml:space="preserve" text-anchor="start" x="192.14" y="-103.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed generalized DTO&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="245.02" y="-92.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">EdgeFrame</text>
+<polygon fill="none" stroke="black" points="184.14,0 184.14,-82 365.8,-82 365.8,0 184.14,0"/>
+<text xml:space="preserve" text-anchor="start" x="192.14" y="-63" font-family="Helvetica,sans-Serif" font-size="11.00">+ source_node_id: str</text>
+<text xml:space="preserve" text-anchor="start" x="192.14" y="-49.8" font-family="Helvetica,sans-Serif" font-size="11.00">+ source_id: str</text>
+<text xml:space="preserve" text-anchor="start" x="192.14" y="-36.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ modality: str</text>
+<text xml:space="preserve" text-anchor="start" x="192.14" y="-23.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ frame_index: int</text>
+<text xml:space="preserve" text-anchor="start" x="192.14" y="-10.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ payload: dict</text>
+</g>
+<!-- IngressAdapter -->
+<g id="node2" class="node">
+<title>IngressAdapter</title>
+<polygon fill="#edf2f7" stroke="none" points="166.24,-230.4 166.24,-268.4 383.7,-268.4 383.7,-230.4 166.24,-230.4"/>
+<polygon fill="none" stroke="black" points="166.24,-230.4 166.24,-268.4 383.7,-268.4 383.7,-230.4 166.24,-230.4"/>
+<text xml:space="preserve" text-anchor="start" x="213.23" y="-251.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="234.63" y="-240.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">IngressAdapter</text>
+<polygon fill="none" stroke="black" points="166.24,-201.2 166.24,-230.4 383.7,-230.4 383.7,-201.2 166.24,-201.2"/>
+<text xml:space="preserve" text-anchor="start" x="174.24" y="-211.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ adapt(frame: EdgeFrame): Observation</text>
+</g>
+<!-- IngressAdapter&#45;&gt;EdgeFrame -->
+<g id="edge5" class="edge">
+<title>IngressAdapter&#45;&gt;EdgeFrame</title>
+<path fill="none" stroke="#334155" stroke-dasharray="5,2" d="M274.97,-201.3C274.97,-180.92 274.97,-153.89 274.97,-128.99"/>
+<polygon fill="#334155" stroke="#334155" points="274.97,-121.15 278.57,-129.15 274.97,-123.94 274.97,-129.15 274.97,-129.15 274.97,-129.15 274.97,-123.94 271.37,-129.15 274.97,-121.15"/>
+<text xml:space="preserve" text-anchor="middle" x="297.76" y="-147" font-family="Helvetica,sans-Serif" font-size="10.00">consumes</text>
+</g>
+<!-- ContractValidator -->
+<g id="node3" class="node">
+<title>ContractValidator</title>
+<polygon fill="#edf2f7" stroke="none" points="385.96,-55.6 385.96,-93.6 633.98,-93.6 633.98,-55.6 385.96,-55.6"/>
+<polygon fill="none" stroke="black" points="385.96,-55.6 385.96,-93.6 633.98,-93.6 633.98,-55.6 385.96,-55.6"/>
+<text xml:space="preserve" text-anchor="start" x="448.23" y="-76.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="463.82" y="-65.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">ContractValidator</text>
+<polygon fill="none" stroke="black" points="385.96,-26.4 385.96,-55.6 633.98,-55.6 633.98,-26.4 385.96,-26.4"/>
+<text xml:space="preserve" text-anchor="start" x="393.96" y="-36.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ validate(frame: EdgeFrame): ValidationResult</text>
+</g>
+<!-- IngressAdapter&#45;&gt;ContractValidator -->
+<g id="edge6" class="edge">
+<title>IngressAdapter&#45;&gt;ContractValidator</title>
+<path fill="none" stroke="#334155" d="M319.17,-201.3C358.81,-172.15 416.97,-129.39 458.65,-98.74"/>
+<polygon fill="#334155" stroke="#334155" points="464.99,-94.08 460.67,-101.72 462.74,-95.73 458.54,-98.82 458.54,-98.82 458.54,-98.82 462.74,-95.73 456.41,-95.92 464.99,-94.08"/>
+<text xml:space="preserve" text-anchor="middle" x="448.89" y="-147" font-family="Helvetica,sans-Serif" font-size="10.00">validates before emission</text>
+</g>
+<!-- Observation -->
+<g id="node8" class="node">
+<title>Observation</title>
+<polygon fill="#edf2f7" stroke="none" points="0,-62.2 0,-100.2 163.94,-100.2 163.94,-62.2 0,-62.2"/>
+<polygon fill="none" stroke="black" points="0,-62.2 0,-100.2 163.94,-100.2 163.94,-62.2 0,-62.2"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-83.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;existing object subtype&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="49.88" y="-72.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">Observation</text>
+<polygon fill="none" stroke="black" points="0,-19.8 0,-62.2 163.94,-62.2 163.94,-19.8 0,-19.8"/>
+<text xml:space="preserve" text-anchor="start" x="8" y="-43.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ source_id: str</text>
+<text xml:space="preserve" text-anchor="start" x="8" y="-30" font-family="Helvetica,sans-Serif" font-size="11.00">+ inherited DataObject fields</text>
+</g>
+<!-- IngressAdapter&#45;&gt;Observation -->
+<g id="edge7" class="edge">
+<title>IngressAdapter&#45;&gt;Observation</title>
+<path fill="none" stroke="#334155" stroke-dasharray="5,2" d="M238.67,-201.3C208.57,-174.35 165.47,-135.76 132.08,-105.87"/>
+<polygon fill="#334155" stroke="#334155" points="126.45,-100.82 134.81,-103.48 128.52,-102.68 132.41,-106.16 132.41,-106.16 132.41,-106.16 128.52,-102.68 130.01,-108.84 126.45,-100.82"/>
+<text xml:space="preserve" text-anchor="middle" x="204.83" y="-147" font-family="Helvetica,sans-Serif" font-size="10.00">produces</text>
+</g>
+<!-- FrameValidator -->
+<g id="node4" class="node">
+<title>FrameValidator</title>
+<polygon fill="#edf2f7" stroke="none" points="653.75,-251.6 653.75,-289.6 838.19,-289.6 838.19,-251.6 653.75,-251.6"/>
+<polygon fill="none" stroke="black" points="653.75,-251.6 653.75,-289.6 838.19,-289.6 838.19,-251.6 653.75,-251.6"/>
+<text xml:space="preserve" text-anchor="start" x="665.9" y="-272.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed implementation&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="705.93" y="-261.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">FrameValidator</text>
+<polygon fill="none" stroke="black" points="653.75,-209.2 653.75,-251.6 838.19,-251.6 838.19,-209.2 653.75,-209.2"/>
+<text xml:space="preserve" text-anchor="start" x="661.75" y="-232.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ shared_validator</text>
+<text xml:space="preserve" text-anchor="start" x="661.75" y="-219.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ profile_registry</text>
+<polygon fill="none" stroke="black" points="653.75,-180 653.75,-209.2 838.19,-209.2 838.19,-180 653.75,-180"/>
+<text xml:space="preserve" text-anchor="start" x="661.75" y="-190.2" font-family="Helvetica,sans-Serif" font-size="11.00">+ validate(frame): ValidationResult</text>
+</g>
+<!-- FrameValidator&#45;&gt;ContractValidator -->
+<g id="edge1" class="edge">
+<title>FrameValidator&#45;&gt;ContractValidator</title>
+<path fill="none" stroke="#334155" stroke-dasharray="5,2" d="M672.59,-180.07C636.77,-153.84 594.5,-122.9 562.04,-99.13"/>
+<polygon fill="none" stroke="#334155" points="563.76,-96.92 555.66,-94.45 560.46,-101.44 563.76,-96.92"/>
+</g>
+<!-- SharedEnvelopeValidator -->
+<g id="node5" class="node">
+<title>SharedEnvelopeValidator</title>
+<polygon fill="#edf2f7" stroke="none" points="653.75,-55.6 653.75,-93.6 838.19,-93.6 838.19,-55.6 653.75,-55.6"/>
+<polygon fill="none" stroke="black" points="653.75,-55.6 653.75,-93.6 838.19,-93.6 838.19,-55.6 653.75,-55.6"/>
+<text xml:space="preserve" text-anchor="start" x="665.9" y="-76.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed implementation&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="679.34" y="-65.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">SharedEnvelopeValidator</text>
+<polygon fill="none" stroke="black" points="653.75,-26.4 653.75,-55.6 838.19,-55.6 838.19,-26.4 653.75,-26.4"/>
+<text xml:space="preserve" text-anchor="start" x="661.75" y="-36.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ validate(frame): ValidationResult</text>
+</g>
+<!-- FrameValidator&#45;&gt;SharedEnvelopeValidator -->
+<g id="edge2" class="edge">
+<title>FrameValidator&#45;&gt;SharedEnvelopeValidator</title>
+<path fill="none" stroke="#334155" d="M745.97,-180.07C745.97,-155.06 745.97,-125.76 745.97,-102.48"/>
+<polygon fill="#334155" stroke="#334155" points="745.97,-94.77 749.57,-102.77 745.97,-97.56 745.97,-102.77 745.97,-102.77 745.97,-102.77 745.97,-97.56 742.37,-102.77 745.97,-94.77"/>
+<text xml:space="preserve" text-anchor="middle" x="778.21" y="-147" font-family="Helvetica,sans-Serif" font-size="10.00">shared checks</text>
+</g>
+<!-- ProfileValidator -->
+<g id="node6" class="node">
+<title>ProfileValidator</title>
+<polygon fill="#edf2f7" stroke="none" points="857.96,-55.6 857.96,-93.6 1105.98,-93.6 1105.98,-55.6 857.96,-55.6"/>
+<polygon fill="none" stroke="black" points="857.96,-55.6 857.96,-93.6 1105.98,-93.6 1105.98,-55.6 857.96,-55.6"/>
+<text xml:space="preserve" text-anchor="start" x="920.23" y="-76.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed Protocol&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="941.32" y="-65.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">ProfileValidator</text>
+<polygon fill="none" stroke="black" points="857.96,-26.4 857.96,-55.6 1105.98,-55.6 1105.98,-26.4 857.96,-26.4"/>
+<text xml:space="preserve" text-anchor="start" x="865.96" y="-36.6" font-family="Helvetica,sans-Serif" font-size="11.00">+ validate(frame: EdgeFrame): ValidationResult</text>
+</g>
+<!-- FrameValidator&#45;&gt;ProfileValidator -->
+<g id="edge3" class="edge">
+<title>FrameValidator&#45;&gt;ProfileValidator</title>
+<path fill="none" stroke="#334155" d="M819.35,-180.07C855.33,-153.73 897.79,-122.63 930.31,-98.83"/>
+<polygon fill="#334155" stroke="#334155" points="936.52,-94.28 932.2,-101.91 934.28,-95.92 930.07,-99 930.07,-99 930.07,-99 934.28,-95.92 927.94,-96.1 936.52,-94.28"/>
+<text xml:space="preserve" text-anchor="middle" x="903.71" y="-147" font-family="Helvetica,sans-Serif" font-size="10.00">registered profiles</text>
+<text xml:space="preserve" text-anchor="middle" x="930" y="-96.56" font-family="Helvetica,sans-Serif" font-size="10.00">0..*</text>
+</g>
+<!-- AudioProfileValidator -->
+<g id="node7" class="node">
+<title>AudioProfileValidator</title>
+<polygon fill="#edf2f7" stroke="none" points="889.75,-230.4 889.75,-268.4 1074.19,-268.4 1074.19,-230.4 889.75,-230.4"/>
+<polygon fill="none" stroke="black" points="889.75,-230.4 889.75,-268.4 1074.19,-268.4 1074.19,-230.4 889.75,-230.4"/>
+<text xml:space="preserve" text-anchor="start" x="901.9" y="-251.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">&lt;&lt;proposed implementation&gt;&gt;</text>
+<text xml:space="preserve" text-anchor="start" x="925.74" y="-240.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00">AudioProfileValidator</text>
+<polygon fill="none" stroke="black" points="889.75,-201.2 889.75,-230.4 1074.19,-230.4 1074.19,-201.2 889.75,-201.2"/>
+<text xml:space="preserve" text-anchor="start" x="897.75" y="-211.4" font-family="Helvetica,sans-Serif" font-size="11.00">+ validate(frame): ValidationResult</text>
+</g>
+<!-- AudioProfileValidator&#45;&gt;ProfileValidator -->
+<g id="edge4" class="edge">
+<title>AudioProfileValidator&#45;&gt;ProfileValidator</title>
+<path fill="none" stroke="#334155" stroke-dasharray="5,2" d="M981.97,-201.3C981.97,-173.42 981.97,-133.08 981.97,-102.8"/>
+<polygon fill="none" stroke="#334155" points="984.77,-102.87 981.97,-94.87 979.17,-102.87 984.77,-102.87"/>
+</g>
+</g>
+</svg>
+<figcaption><a href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTE0MnB0IiBoZWlnaHQ9IjM1NXB0Igogdmlld0JveD0iMC4wMCAwLjAwIDExNDIuMDAgMzU1LjAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KPGcgaWQ9ImdyYXBoMCIgY2xhc3M9ImdyYXBoIiB0cmFuc2Zvcm09InNjYWxlKDEgMSkgcm90YXRlKDApIHRyYW5zbGF0ZSgxOCAzMzcuMikiPgo8dGl0bGU+U0FSPC90aXRsZT4KPHBvbHlnb24gZmlsbD0id2hpdGUiIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSItMTgsMTggLTE4LC0zMzcuMiAxMTIzLjk4LC0zMzcuMiAxMTIzLjk4LDE4IC0xOCwxOCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI1NTIuOTkiIHk9Ii0yOTkiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxOC4wMCI+MDUgTW9kYWxpdHkgZXh0ZW5zaW9uIGJ5IHZhbGlkYXRpb24gYW5kIGFkYXB0YXRpb24gfCBwcm9wb3NlZCwgbm90IGltcGxlbWVudGVkPC90ZXh0Pgo8IS0tIEVkZ2VGcmFtZSAtLT4KPGcgaWQ9Im5vZGUxIiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5FZGdlRnJhbWU8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iMTg0LjE0LC04MiAxODQuMTQsLTEyMCAzNjUuOCwtMTIwIDM2NS44LC04MiAxODQuMTQsLTgyIi8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMTg0LjE0LC04MiAxODQuMTQsLTEyMCAzNjUuOCwtMTIwIDM2NS44LC04MiAxODQuMTQsLTgyIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTkyLjE0IiB5PSItMTAzLjEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7cHJvcG9zZWQgZ2VuZXJhbGl6ZWQgRFRPJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMjQ1LjAyIiB5PSItOTIuMSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+RWRnZUZyYW1lPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjE4NC4xNCwwIDE4NC4xNCwtODIgMzY1LjgsLTgyIDM2NS44LDAgMTg0LjE0LDAiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIxOTIuMTQiIHk9Ii02MyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNvdXJjZV9ub2RlX2lkOiBzdHI8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTkyLjE0IiB5PSItNDkuOCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNvdXJjZV9pZDogc3RyPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjE5Mi4xNCIgeT0iLTM2LjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBtb2RhbGl0eTogc3RyPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjE5Mi4xNCIgeT0iLTIzLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBmcmFtZV9pbmRleDogaW50PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjE5Mi4xNCIgeT0iLTEwLjIiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBwYXlsb2FkOiBkaWN0PC90ZXh0Pgo8L2c+CjwhLS0gSW5ncmVzc0FkYXB0ZXIgLS0+CjxnIGlkPSJub2RlMiIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+SW5ncmVzc0FkYXB0ZXI8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iMTY2LjI0LC0yMzAuNCAxNjYuMjQsLTI2OC40IDM4My43LC0yNjguNCAzODMuNywtMjMwLjQgMTY2LjI0LC0yMzAuNCIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjE2Ni4yNCwtMjMwLjQgMTY2LjI0LC0yNjguNCAzODMuNywtMjY4LjQgMzgzLjcsLTIzMC40IDE2Ni4yNCwtMjMwLjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSIyMTMuMjMiIHk9Ii0yNTEuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtwcm9wb3NlZCBQcm90b2NvbCZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjIzNC42MyIgeT0iLTI0MC41IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5JbmdyZXNzQWRhcHRlcjwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSIxNjYuMjQsLTIwMS4yIDE2Ni4yNCwtMjMwLjQgMzgzLjcsLTIzMC40IDM4My43LC0yMDEuMiAxNjYuMjQsLTIwMS4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iMTc0LjI0IiB5PSItMjExLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBhZGFwdChmcmFtZTogRWRnZUZyYW1lKTogT2JzZXJ2YXRpb248L3RleHQ+CjwvZz4KPCEtLSBJbmdyZXNzQWRhcHRlciYjNDU7Jmd0O0VkZ2VGcmFtZSAtLT4KPGcgaWQ9ImVkZ2U1IiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5JbmdyZXNzQWRhcHRlciYjNDU7Jmd0O0VkZ2VGcmFtZTwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNMjc0Ljk3LC0yMDEuM0MyNzQuOTcsLTE4MC45MiAyNzQuOTcsLTE1My44OSAyNzQuOTcsLTEyOC45OSIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iMjc0Ljk3LC0xMjEuMTUgMjc4LjU3LC0xMjkuMTUgMjc0Ljk3LC0xMjMuOTQgMjc0Ljk3LC0xMjkuMTUgMjc0Ljk3LC0xMjkuMTUgMjc0Ljk3LC0xMjkuMTUgMjc0Ljk3LC0xMjMuOTQgMjcxLjM3LC0xMjkuMTUgMjc0Ljk3LC0xMjEuMTUiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjk3Ljc2IiB5PSItMTQ3IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPmNvbnN1bWVzPC90ZXh0Pgo8L2c+CjwhLS0gQ29udHJhY3RWYWxpZGF0b3IgLS0+CjxnIGlkPSJub2RlMyIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+Q29udHJhY3RWYWxpZGF0b3I8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iMzg1Ljk2LC01NS42IDM4NS45NiwtOTMuNiA2MzMuOTgsLTkzLjYgNjMzLjk4LC01NS42IDM4NS45NiwtNTUuNiIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjM4NS45NiwtNTUuNiAzODUuOTYsLTkzLjYgNjMzLjk4LC05My42IDYzMy45OCwtNTUuNiAzODUuOTYsLTU1LjYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI0NDguMjMiIHk9Ii03Ni43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O3Byb3Bvc2VkIFByb3RvY29sJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNDYzLjgyIiB5PSItNjUuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Q29udHJhY3RWYWxpZGF0b3I8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMzg1Ljk2LC0yNi40IDM4NS45NiwtNTUuNiA2MzMuOTgsLTU1LjYgNjMzLjk4LC0yNi40IDM4NS45NiwtMjYuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjM5My45NiIgeT0iLTM2LjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyB2YWxpZGF0ZShmcmFtZTogRWRnZUZyYW1lKTogVmFsaWRhdGlvblJlc3VsdDwvdGV4dD4KPC9nPgo8IS0tIEluZ3Jlc3NBZGFwdGVyJiM0NTsmZ3Q7Q29udHJhY3RWYWxpZGF0b3IgLS0+CjxnIGlkPSJlZGdlNiIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+SW5ncmVzc0FkYXB0ZXImIzQ1OyZndDtDb250cmFjdFZhbGlkYXRvcjwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgZD0iTTMxOS4xNywtMjAxLjNDMzU4LjgxLC0xNzIuMTUgNDE2Ljk3LC0xMjkuMzkgNDU4LjY1LC05OC43NCIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNDY0Ljk5LC05NC4wOCA0NjAuNjcsLTEwMS43MiA0NjIuNzQsLTk1LjczIDQ1OC41NCwtOTguODIgNDU4LjU0LC05OC44MiA0NTguNTQsLTk4LjgyIDQ2Mi43NCwtOTUuNzMgNDU2LjQxLC05NS45MiA0NjQuOTksLTk0LjA4Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjQ0OC44OSIgeT0iLTE0NyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjEwLjAwIj52YWxpZGF0ZXMgYmVmb3JlIGVtaXNzaW9uPC90ZXh0Pgo8L2c+CjwhLS0gT2JzZXJ2YXRpb24gLS0+CjxnIGlkPSJub2RlOCIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+T2JzZXJ2YXRpb248L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iMCwtNjIuMiAwLC0xMDAuMiAxNjMuOTQsLTEwMC4yIDE2My45NCwtNjIuMiAwLC02Mi4yIi8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iMCwtNjIuMiAwLC0xMDAuMiAxNjMuOTQsLTEwMC4yIDE2My45NCwtNjIuMiAwLC02Mi4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iOCIgeT0iLTgzLjMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7ZXhpc3Rpbmcgb2JqZWN0IHN1YnR5cGUmZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI0OS44OCIgeT0iLTcyLjMiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPk9ic2VydmF0aW9uPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjAsLTE5LjggMCwtNjIuMiAxNjMuOTQsLTYyLjIgMTYzLjk0LC0xOS44IDAsLTE5LjgiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI4IiB5PSItNDMuMiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNvdXJjZV9pZDogc3RyPC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjgiIHk9Ii0zMCIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIGluaGVyaXRlZCBEYXRhT2JqZWN0IGZpZWxkczwvdGV4dD4KPC9nPgo8IS0tIEluZ3Jlc3NBZGFwdGVyJiM0NTsmZ3Q7T2JzZXJ2YXRpb24gLS0+CjxnIGlkPSJlZGdlNyIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+SW5ncmVzc0FkYXB0ZXImIzQ1OyZndDtPYnNlcnZhdGlvbjwvdGl0bGU+CjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzNDE1NSIgc3Ryb2tlLWRhc2hhcnJheT0iNSwyIiBkPSJNMjM4LjY3LC0yMDEuM0MyMDguNTcsLTE3NC4zNSAxNjUuNDcsLTEzNS43NiAxMzIuMDgsLTEwNS44NyIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iMTI2LjQ1LC0xMDAuODIgMTM0LjgxLC0xMDMuNDggMTI4LjUyLC0xMDIuNjggMTMyLjQxLC0xMDYuMTYgMTMyLjQxLC0xMDYuMTYgMTMyLjQxLC0xMDYuMTYgMTI4LjUyLC0xMDIuNjggMTMwLjAxLC0xMDguODQgMTI2LjQ1LC0xMDAuODIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iMjA0LjgzIiB5PSItMTQ3IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTAuMDAiPnByb2R1Y2VzPC90ZXh0Pgo8L2c+CjwhLS0gRnJhbWVWYWxpZGF0b3IgLS0+CjxnIGlkPSJub2RlNCIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+RnJhbWVWYWxpZGF0b3I8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iNjUzLjc1LC0yNTEuNiA2NTMuNzUsLTI4OS42IDgzOC4xOSwtMjg5LjYgODM4LjE5LC0yNTEuNiA2NTMuNzUsLTI1MS42Ii8+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNjUzLjc1LC0yNTEuNiA2NTMuNzUsLTI4OS42IDgzOC4xOSwtMjg5LjYgODM4LjE5LC0yNTEuNiA2NTMuNzUsLTI1MS42Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNjY1LjkiIHk9Ii0yNzIuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+Jmx0OyZsdDtwcm9wb3NlZCBpbXBsZW1lbnRhdGlvbiZndDsmZ3Q7PC90ZXh0Pgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjcwNS45MyIgeT0iLTI2MS43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj5GcmFtZVZhbGlkYXRvcjwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI2NTMuNzUsLTIwOS4yIDY1My43NSwtMjUxLjYgODM4LjE5LC0yNTEuNiA4MzguMTksLTIwOS4yIDY1My43NSwtMjA5LjIiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI2NjEuNzUiIHk9Ii0yMzIuNiIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXNpemU9IjExLjAwIj4rIHNoYXJlZF92YWxpZGF0b3I8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNjYxLjc1IiB5PSItMjE5LjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyBwcm9maWxlX3JlZ2lzdHJ5PC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9IjY1My43NSwtMTgwIDY1My43NSwtMjA5LjIgODM4LjE5LC0yMDkuMiA4MzguMTksLTE4MCA2NTMuNzUsLTE4MCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjY2MS43NSIgeT0iLTE5MC4yIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgdmFsaWRhdGUoZnJhbWUpOiBWYWxpZGF0aW9uUmVzdWx0PC90ZXh0Pgo8L2c+CjwhLS0gRnJhbWVWYWxpZGF0b3ImIzQ1OyZndDtDb250cmFjdFZhbGlkYXRvciAtLT4KPGcgaWQ9ImVkZ2UxIiBjbGFzcz0iZWRnZSI+Cjx0aXRsZT5GcmFtZVZhbGlkYXRvciYjNDU7Jmd0O0NvbnRyYWN0VmFsaWRhdG9yPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2UtZGFzaGFycmF5PSI1LDIiIGQ9Ik02NzIuNTksLTE4MC4wN0M2MzYuNzcsLTE1My44NCA1OTQuNSwtMTIyLjkgNTYyLjA0LC05OS4xMyIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNTYzLjc2LC05Ni45MiA1NTUuNjYsLTk0LjQ1IDU2MC40NiwtMTAxLjQ0IDU2My43NiwtOTYuOTIiLz4KPC9nPgo8IS0tIFNoYXJlZEVudmVsb3BlVmFsaWRhdG9yIC0tPgo8ZyBpZD0ibm9kZTUiIGNsYXNzPSJub2RlIj4KPHRpdGxlPlNoYXJlZEVudmVsb3BlVmFsaWRhdG9yPC90aXRsZT4KPHBvbHlnb24gZmlsbD0iI2VkZjJmNyIgc3Ryb2tlPSJub25lIiBwb2ludHM9IjY1My43NSwtNTUuNiA2NTMuNzUsLTkzLjYgODM4LjE5LC05My42IDgzOC4xOSwtNTUuNiA2NTMuNzUsLTU1LjYiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI2NTMuNzUsLTU1LjYgNjUzLjc1LC05My42IDgzOC4xOSwtOTMuNiA4MzguMTksLTU1LjYgNjUzLjc1LC01NS42Ii8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNjY1LjkiIHk9Ii03Ni43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O3Byb3Bvc2VkIGltcGxlbWVudGF0aW9uJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iNjc5LjM0IiB5PSItNjUuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+U2hhcmVkRW52ZWxvcGVWYWxpZGF0b3I8L3RleHQ+Cjxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHBvaW50cz0iNjUzLjc1LC0yNi40IDY1My43NSwtNTUuNiA4MzguMTksLTU1LjYgODM4LjE5LC0yNi40IDY1My43NSwtMjYuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjY2MS43NSIgeT0iLTM2LjYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyB2YWxpZGF0ZShmcmFtZSk6IFZhbGlkYXRpb25SZXN1bHQ8L3RleHQ+CjwvZz4KPCEtLSBGcmFtZVZhbGlkYXRvciYjNDU7Jmd0O1NoYXJlZEVudmVsb3BlVmFsaWRhdG9yIC0tPgo8ZyBpZD0iZWRnZTIiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPkZyYW1lVmFsaWRhdG9yJiM0NTsmZ3Q7U2hhcmVkRW52ZWxvcGVWYWxpZGF0b3I8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIGQ9Ik03NDUuOTcsLTE4MC4wN0M3NDUuOTcsLTE1NS4wNiA3NDUuOTcsLTEyNS43NiA3NDUuOTcsLTEwMi40OCIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iNzQ1Ljk3LC05NC43NyA3NDkuNTcsLTEwMi43NyA3NDUuOTcsLTk3LjU2IDc0NS45NywtMTAyLjc3IDc0NS45NywtMTAyLjc3IDc0NS45NywtMTAyLjc3IDc0NS45NywtOTcuNTYgNzQyLjM3LC0xMDIuNzcgNzQ1Ljk3LC05NC43NyIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI3NzguMjEiIHk9Ii0xNDciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+c2hhcmVkIGNoZWNrczwvdGV4dD4KPC9nPgo8IS0tIFByb2ZpbGVWYWxpZGF0b3IgLS0+CjxnIGlkPSJub2RlNiIgY2xhc3M9Im5vZGUiPgo8dGl0bGU+UHJvZmlsZVZhbGlkYXRvcjwvdGl0bGU+Cjxwb2x5Z29uIGZpbGw9IiNlZGYyZjciIHN0cm9rZT0ibm9uZSIgcG9pbnRzPSI4NTcuOTYsLTU1LjYgODU3Ljk2LC05My42IDExMDUuOTgsLTkzLjYgMTEwNS45OCwtNTUuNiA4NTcuOTYsLTU1LjYiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI4NTcuOTYsLTU1LjYgODU3Ljk2LC05My42IDExMDUuOTgsLTkzLjYgMTEwNS45OCwtNTUuNiA4NTcuOTYsLTU1LjYiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI5MjAuMjMiIHk9Ii03Ni43IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmb250LXNpemU9IjExLjAwIj4mbHQ7Jmx0O3Byb3Bvc2VkIFByb3RvY29sJmd0OyZndDs8L3RleHQ+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iOTQxLjMyIiB5PSItNjUuNyIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+UHJvZmlsZVZhbGlkYXRvcjwvdGV4dD4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI4NTcuOTYsLTI2LjQgODU3Ljk2LC01NS42IDExMDUuOTgsLTU1LjYgMTEwNS45OCwtMjYuNCA4NTcuOTYsLTI2LjQiLz4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI4NjUuOTYiIHk9Ii0zNi42IiBmb250LWZhbWlseT0iSGVsdmV0aWNhLHNhbnMtU2VyaWYiIGZvbnQtc2l6ZT0iMTEuMDAiPisgdmFsaWRhdGUoZnJhbWU6IEVkZ2VGcmFtZSk6IFZhbGlkYXRpb25SZXN1bHQ8L3RleHQ+CjwvZz4KPCEtLSBGcmFtZVZhbGlkYXRvciYjNDU7Jmd0O1Byb2ZpbGVWYWxpZGF0b3IgLS0+CjxnIGlkPSJlZGdlMyIgY2xhc3M9ImVkZ2UiPgo8dGl0bGU+RnJhbWVWYWxpZGF0b3ImIzQ1OyZndDtQcm9maWxlVmFsaWRhdG9yPC90aXRsZT4KPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBkPSJNODE5LjM1LC0xODAuMDdDODU1LjMzLC0xNTMuNzMgODk3Ljc5LC0xMjIuNjMgOTMwLjMxLC05OC44MyIvPgo8cG9seWdvbiBmaWxsPSIjMzM0MTU1IiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iOTM2LjUyLC05NC4yOCA5MzIuMiwtMTAxLjkxIDkzNC4yOCwtOTUuOTIgOTMwLjA3LC05OSA5MzAuMDcsLTk5IDkzMC4wNywtOTkgOTM0LjI4LC05NS45MiA5MjcuOTQsLTk2LjEgOTM2LjUyLC05NC4yOCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiB4PSI5MDMuNzEiIHk9Ii0xNDciIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+cmVnaXN0ZXJlZCBwcm9maWxlczwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgeD0iOTMwIiB5PSItOTYuNTYiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMC4wMCI+MC4uKjwvdGV4dD4KPC9nPgo8IS0tIEF1ZGlvUHJvZmlsZVZhbGlkYXRvciAtLT4KPGcgaWQ9Im5vZGU3IiBjbGFzcz0ibm9kZSI+Cjx0aXRsZT5BdWRpb1Byb2ZpbGVWYWxpZGF0b3I8L3RpdGxlPgo8cG9seWdvbiBmaWxsPSIjZWRmMmY3IiBzdHJva2U9Im5vbmUiIHBvaW50cz0iODg5Ljc1LC0yMzAuNCA4ODkuNzUsLTI2OC40IDEwNzQuMTksLTI2OC40IDEwNzQuMTksLTIzMC40IDg4OS43NSwtMjMwLjQiLz4KPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgcG9pbnRzPSI4ODkuNzUsLTIzMC40IDg4OS43NSwtMjY4LjQgMTA3NC4xOSwtMjY4LjQgMTA3NC4xOSwtMjMwLjQgODg5Ljc1LC0yMzAuNCIvPgo8dGV4dCB4bWw6c3BhY2U9InByZXNlcnZlIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIHg9IjkwMS45IiB5PSItMjUxLjUiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTEuMDAiPiZsdDsmbHQ7cHJvcG9zZWQgaW1wbGVtZW50YXRpb24mZ3Q7Jmd0OzwvdGV4dD4KPHRleHQgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgdGV4dC1hbmNob3I9InN0YXJ0IiB4PSI5MjUuNzQiIHk9Ii0yNDAuNSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxzYW5zLVNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIxMS4wMCI+QXVkaW9Qcm9maWxlVmFsaWRhdG9yPC90ZXh0Pgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBwb2ludHM9Ijg4OS43NSwtMjAxLjIgODg5Ljc1LC0yMzAuNCAxMDc0LjE5LC0yMzAuNCAxMDc0LjE5LC0yMDEuMiA4ODkuNzUsLTIwMS4yIi8+Cjx0ZXh0IHhtbDpzcGFjZT0icHJlc2VydmUiIHRleHQtYW5jaG9yPSJzdGFydCIgeD0iODk3Ljc1IiB5PSItMjExLjQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2Esc2Fucy1TZXJpZiIgZm9udC1zaXplPSIxMS4wMCI+KyB2YWxpZGF0ZShmcmFtZSk6IFZhbGlkYXRpb25SZXN1bHQ8L3RleHQ+CjwvZz4KPCEtLSBBdWRpb1Byb2ZpbGVWYWxpZGF0b3ImIzQ1OyZndDtQcm9maWxlVmFsaWRhdG9yIC0tPgo8ZyBpZD0iZWRnZTQiIGNsYXNzPSJlZGdlIj4KPHRpdGxlPkF1ZGlvUHJvZmlsZVZhbGlkYXRvciYjNDU7Jmd0O1Byb2ZpbGVWYWxpZGF0b3I8L3RpdGxlPgo8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMiIgZD0iTTk4MS45NywtMjAxLjNDOTgxLjk3LC0xNzMuNDIgOTgxLjk3LC0xMzMuMDggOTgxLjk3LC0xMDIuOCIvPgo8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHBvaW50cz0iOTg0Ljc3LC0xMDIuODcgOTgxLjk3LC05NC44NyA5NzkuMTcsLTEwMi44NyA5ODQuNzcsLTEwMi44NyIvPgo8L2c+CjwvZz4KPC9zdmc+Cg==" download="05_modality_composition.svg">Download this SVG diagram</a></figcaption></figure>
+<p>The SVG files can be opened directly in a browser. Matching <code>.dot</code> files are editable Graphviz sources. The handoff package includes a standalone HTML report with all diagrams embedded, so review does not depend on a diagram server or GitHub rendering.</p>
+<h2>10. Acceptance and review cases</h2>
+<p>These cases define the proposed review target. The verification record distinguishes source inspection and isolated design checks actually performed from future integration tests.</p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Expected result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OBJ-01</td>
+<td>Direct construction of the proposed formal abstract DataObject fails.</td>
+</tr>
+<tr>
+<td>OBJ-02</td>
+<td>A direct child that leaves the abstract hook unimplemented cannot be constructed.</td>
+</tr>
+<tr>
+<td>OBJ-03</td>
+<td>All ten existing concrete categories remain constructible and keep their own object_type.</td>
+</tr>
+<tr>
+<td>OBJ-04</td>
+<td>Separate instances have separate default payload, provenance, parent lists, and timing objects.</td>
+</tr>
+<tr>
+<td>OBJ-05</td>
+<td>Event aggregation keeps observation IDs and parent provenance aligned without duplicates.</td>
+</tr>
+<tr>
+<td>OBJ-06</td>
+<td>A processing stage is not a DataObject. O1 is not an EvaluationRecord.</td>
+</tr>
+<tr>
+<td>OBJ-07</td>
+<td>Static interface checking rejects incompatible stage or sink signatures.</td>
+</tr>
+<tr>
+<td>OBJ-08</td>
+<td>Shared frame validation does not require audio-only metadata for every modality.</td>
+</tr>
+<tr>
+<td>OBJ-09</td>
+<td>Audio missing required precision information fails profile validation.</td>
+</tr>
+<tr>
+<td>OBJ-10</td>
+<td>Unknown/unapproved profiles do not silently pass as validated.</td>
+</tr>
+<tr>
+<td>OBJ-11</td>
+<td>Native frame identity is preserved alongside a separate SAR object ID.</td>
+</tr>
+<tr>
+<td>OBJ-12</td>
+<td>Derived objects retain parent linkage and receive new object IDs.</td>
+</tr>
+<tr>
+<td>OBJ-13</td>
+<td>Generated IDs and estimated timestamps carry approved origin metadata.</td>
+</tr>
+<tr>
+<td>OBJ-14</td>
+<td>Run/session context reaches artifacts and telemetry according to D01.04.</td>
+</tr>
+<tr>
+<td>OBJ-15</td>
+<td>Observation-to-dispatch serialization preserves the approved field names and categories.</td>
+</tr>
+<tr>
+<td>OBJ-16</td>
+<td>Mutable metadata is isolated when a new derived artifact is emitted.</td>
+</tr>
+<tr>
+<td>OBJ-17</td>
+<td>Canonical-room creation/lookup follows a separately agreed uniqueness policy.</td>
+</tr>
+<tr>
+<td>OBJ-18</td>
+<td>Failed validation prevents normal observation emission and records the approved error outcome.</td>
+</tr>
+</tbody></table>
+<h2>11. Decisions and implementation sequence</h2>
+<p>Professor Smith should assess these recommendations:</p>
+<ol>
+<li>Confirm the eight common fields and ten shallow concrete categories.</li>
+<li>Confirm formal ABC enforcement through the existing construction hook.</li>
+<li>Confirm capability interfaces for stage substitution and external adapters/validators.</li>
+<li>Confirm metadata ownership, mutation, and serialization rules before introducing copies or frozen models.</li>
+<li>Decide the representation and requiredness of run/session context and generated-value provenance.</li>
+<li>Approve the diagram set and allocate any future canonical Doc-ID through repository governance.</li>
+</ol>
+<p>Suggested sequence after approval: T04 for object schemas/lineage, T03 for identity propagation, T02/T06 for shared-envelope/provenance handling, T05 for validators, and T12 for profile compatibility. Confirm issue-to-task mappings before editing the task register. Issue 24&#39;s audio-contract evaluation should use the approved class decisions rather than assume this proposal is accepted.</p>
+<p>D02.01 also calls for component and sequence diagrams. This issue&#39;s deliverable is the requested class diagram set. Those additional diagram types remain separate follow-up work and are not claimed complete here.</p>
+<h2>12. Sources and limits</h2>
+<p>Repository sources:</p>
+<ol>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D02.01_SAR_Computational_Class_and_Object_Model_V1_2026-07-27.md">D02.01 class/object model</a>, sections 2, 3.4, 4, and 6.</li>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02_SAR_Shared_Streaming_Contract_V1_2026-07-29.md">D01.02 shared contract</a>, sections 4 through 8.</li>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md">D01.02.01 audio profile</a>, section 4.</li>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.04_SAR_Run_and_Session_Identity_and_Boundary_Policy_V1_2026-07-28.md">D01.04 run/session policy</a>.</li>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D04.03_SAR_Computational_Task_Dependency_Test_and_Milestone_Map_V1_2026-08-03.md">D04.03 task map</a>.</li>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/models.py">Models</a>, <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/identity.py">identity</a>, <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/timing.py">timing</a>, and <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/stages.py">stage contracts</a>.</li>
+<li><a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/edge_ingress.py">Edge adapter</a>, <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/observability.py">logging DTO</a>, <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/storage/raw_store.py">raw storage</a>, and <a href="https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/observability_sinks.py">log sinks</a>.</li>
+</ol>
+<p>External primary references checked October 28, 2026:</p>
+<ul>
+<li><a href="https://docs.python.org/3.12/library/abc.html">Python 3.12 ABC documentation</a>: abstract methods prevent instantiation until concrete implementations exist. ABC alone is not sufficient without an abstract member.</li>
+<li><a href="https://typing.python.org/en/latest/spec/protocol.html">Python typing specification: Protocols</a>: structural interfaces depend on compatible members rather than mandatory inheritance. They do not provide semantic runtime validation.</li>
+<li><a href="https://www.omg.org/spec/UML/2.5.1/About-UML">OMG UML 2.5.1 specification</a>: authoritative UML reference. These simplified class views are design-review artifacts, not a claim of full model interchange or XMI validation.</li>
+</ul>
+<p>The design recommendations are SAR-specific judgments based on these sources. No real inventory values, hardware performance, production schema migration, or completed runtime refactor are claimed.</p>
+</main></body></html>

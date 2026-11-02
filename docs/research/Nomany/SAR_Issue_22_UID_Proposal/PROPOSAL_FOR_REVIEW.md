@@ -1,0 +1,277 @@
+# SAR Sensor UID Definition Set Proposal
+
+Document Class: Sensor Identity Design Proposal
+
+Project: Self-Aware-Room (SAR)
+
+Status: Proposed for review, not an approved runtime contract
+
+Version: 1
+
+Date: 2026-10-28
+
+Prepared for: Kazi Tamim Nomany, with AI assistance
+
+Review authority: Professor David B. Smith
+
+Issue: [SAR #22](https://github.com/CHI-CityTech/Self-Aware-Room/issues/22)
+
+Repository baseline: `8c99abecd723a39370455ba9e27adca2cea872b1`
+
+## 1. Purpose and recommendation
+
+Issue 22 requests research and a meaningful UID system definition set for the [sensor inventory mapping](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/sensors/SAR_Sensor_Inventory_and_Computational_Mapping_V1_2026-08-03.md). That mapping requires stable Sensor UIDs but does not define their scope, allocation, or lifecycle.
+
+Recommended design: give each tracked physical sensing unit a permanent UUID-based Sensor UID. Keep its readable label, procurement asset, logical streams, producer, deployment, and individual data records separately identified. A permanent ID answers which unit produced the data. Metadata answers what the unit measures, where it is, and how it connects.
+
+This is a documentation proposal. Its examples do not allocate real inventory IDs. Its additional fields are candidate extensions that require contract review before implementation. Existing Doc-IDs, inventory values, runtime schemas, and task statuses remain unchanged.
+
+## 2. Research and design choices
+
+### 2.1 Evidence from primary sources
+
+| Reference | Relevant evidence | SAR design inference |
+| --- | --- | --- |
+| [RFC 9562, sections 5.4, 5.7, 6.9, and 6.12](https://www.rfc-editor.org/rfc/rfc9562.html) | UUIDv4 uses random values. UUIDv7 includes a timestamp. UUIDs should generally be treated as opaque identifiers. | Recommend UUIDv4 for long-lived sensor registrations. Keep meaning in metadata. Retain SAR's separate UUIDv7 preference for runtime objects and run/session IDs. |
+| [W3C/OGC SSN and SOSA, sections 4.3 and 4.9](https://www.w3.org/TR/2017/REC-vocab-ssn-20171019/) | The model distinguishes sensors, observations, platforms, and deployments. | Keep hardware identity separate from data-record identity and deployment history. The physical scope proposed here is narrower than SOSA's general Sensor class. |
+| [W3C PROV-DM, sections 2.1 and 5.2](https://www.w3.org/TR/2013/REC-prov-dm-20130430/) | Provenance describes entities, activities, responsibility, and derivation. | Record who assigned an ID and which component generated missing ingest fields. This proposal does not claim RDF or PROV conformance. |
+
+The standards support these distinctions. They do not prescribe SAR's prefixes, physical component boundaries, ownership, or replacement policy. Those are recommendations below, subject to SAR review.
+
+### 2.2 Alternatives considered
+
+| Candidate | Benefit | Limitation for SAR | Recommendation |
+| --- | --- | --- | --- |
+| Room/type/sequence, such as `N928-MIC-01` | Easy to recognize | Moving a sensor makes the embedded location misleading | Use as a changeable display label only |
+| Sequential ID, such as `SAR-SEN-000001` | Short and easy to put on equipment | Concurrent assignment needs a coordinated register | Optional registered tag, separate from machine UID |
+| Vendor serial, MAC address, IP address, or USB path | Available on some devices | Missing or unstable values, shared interfaces, and replacement make poor identity boundaries | Keep as lookup metadata, not the Sensor UID |
+| UUIDv4 with a sensor prefix | Can be issued without a central number counter | Long for people to read | Recommended permanent Sensor UID |
+| UUIDv7 with a sensor prefix | Supports creation-time ordering | Ordering is not needed for the proposed sensor register | Viable alternative if maintainers choose one UUID version across SAR |
+| UUIDv5 from a name | Repeatable from a stable namespace and name | Incorrect or changing name inputs complicate identity recovery | Consider only for a reviewed legacy import, not the default |
+
+## 3. Definition set and identity boundaries
+
+Every rule in sections 3 through 10 is proposed policy, pending approval.
+
+| Field or term | Identifies | Assignment and continuity |
+| --- | --- | --- |
+| `asset_id` | The procurement/operations asset or inventory line | Preserve the OAA inventory value. One asset can contain several sensing units and streams. Never invent an asset ID to fill a gap. |
+| `sensor_uid` / Sensor UID | One tracked physical sensing unit | Assigned once at approved registration. Retained through restart, relocation, and recalibration. Replacement of that unit creates a new UID. |
+| `sensor_tag` | Optional short equipment tag | Registry-issued alias such as `SAR-SEN-000001`. Unique and never reassigned. Not a replacement for the full UID. |
+| `sensor_label` | A readable description | May describe type or current placement. Can change with history. Not a join key. |
+| `source_id` | One logical output stream of a registered sensor or declared software-only source, with defined observable/channel meaning | Separate streams have separate IDs, even on the same hardware. This proposal binds a physical stream to its sensing unit. Hardware replacement creates new stream IDs. |
+| `source_node_id` | A persistent logical producer that sends frames | Independent of its network address. Restarting the same configured producer retains its node ID. A cloned concurrent producer receives a new node ID. |
+| `ingest_node_id` | The receiving SAR ingest service | Assigned through service configuration. Changing receivers does not rename the sensor or its streams. |
+| `producer_epoch_id` | One uninterrupted producer sequence context | New proposed field. Allocate before publishing on start or counter reset. Never restore an old epoch while resetting its counters. |
+| `source_frame_id` | A frame ID supplied by the source, or a clearly marked generated substitute | Preserve native values. Interpret identity within source and producer-epoch scope. Not a Sensor UID. |
+| `object_id` | One canonical SAR data object | Assigned at L1 for emitted observations. Derived objects receive their own IDs with parent linkage. Independent of native frame IDs. |
+| `session_id` and `run_id` | Operating context and bounded processing window | Follow D01.04. Multiple sensors can contribute to one run. Neither identifies a physical sensor. |
+| `deployment_id` | One recorded placement/connection interval | New proposed registry field. New interval when placement or producer assignment changes. |
+| `calibration_revision` | A calibration record for a sensing unit | New proposed registry field. Recalibration updates this reference, not the Sensor UID. |
+
+### 3.1 What counts as one physical sensing unit?
+
+Use the unit that SAR can track as one physical sensing instance. Record the chosen boundary explicitly as `component_boundary` during registration.
+
+1. A standalone microphone is one sensing unit.
+2. A package containing a separately tracked camera and microphone has two Sensor UIDs under one asset.
+3. An inseparable temperature/humidity sensing module tracked and serviced as one unit has one Sensor UID and two source IDs, one per measured property.
+4. A board hosting independently replaceable sensing modules gives each module its own Sensor UID. The board's producer has a separate node ID.
+5. An audio interface channel identifies a connection, not a microphone. Changing the attached microphone requires the corresponding sensor/stream mapping to change.
+6. A software-only simulated or derived source has a source ID and a recorded source kind. Do not fabricate a physical Sensor UID or procurement asset. Use parent-object provenance for derived data.
+
+An operator must resolve an uncertain physical boundary before registration. Do not silently merge two independently tracked components into one UID.
+
+## 4. Proposed identifier syntax
+
+New permanent sensor IDs use:
+
+```text
+sar-sensor-<lowercase, hyphenated UUIDv4>
+```
+
+For example, `sar-sensor-8fae1a3c-572b-4b2d-8f14-3dbbdcb78b5e`.
+
+New stream and node registrations may use the same UUIDv4 format, each with its own freshly generated value and a distinct prefix: `sar-source-`, `sar-node-`, or `sar-ingest-`. Candidate deployment and producer-epoch IDs use `sar-deployment-` and `sar-epoch-`. These are application strings, not registered URI schemes.
+
+Validate the complete prefix, UUID syntax, version 4, and RFC variant. Compare the full normalized value. Reject whitespace, truncated IDs, and malformed values. Generate suffixes with a maintained library backed by the operating system's secure random source. Check uniqueness before accepting a registry entry. A UUID greatly reduces collision risk but does not replace duplicate checks or reference validation.
+
+Do not encode room, model, owner, modality, or calibration state in the permanent UID. Do not shorten the UUID in stored keys. A QR label can carry the full UID plus the optional short tag.
+
+The proposed optional tag pattern is `SAR-SEN-` plus six or more decimal digits, allocated through one reviewed register. A tag cannot be reserved offline by taking the next visible number. The label `N928 east-wall temperature` is illustrative and changeable.
+
+Existing `source_id`, node IDs, object IDs, run IDs, and session IDs are not renamed by this proposal. Adopt syntax for new registrations only after approval. Preserve existing identifiers and record reviewed aliases. The current runtime uses UUIDv4 for object IDs through `generate_object_id()` despite the documentation's UUIDv7 preference. Resolving that implementation gap is separate work.
+
+## 5. Assignment, ownership, and registry records
+
+Recommended responsibility: Professor Smith approves this policy and appoints a sensor registry steward. A contributor prepares registrations. The steward checks physical identity and approves the mapping. These roles are proposed, not claimed appointments.
+
+Proposed assignment process:
+
+1. Verify procurement identity against the authoritative OAA Google Sheet. Record an unresolved asset reference explicitly if the sheet has not been checked.
+2. Identify the physical sensing unit, its component boundary, and available serial/part evidence. Search active and retired records for an existing registration.
+3. If the same unit is already registered, recover its UID. Do not mint a second UID because a label or local config was lost.
+4. Prepare a UUID-based UID and any short tag. Reserve the candidate in a reviewed registration change. Check full-ID uniqueness, tag uniqueness, and conflicting physical references.
+5. Enumerate each logical stream and its measurement/channel meaning. Allocate new source IDs or retain approved existing mappings.
+6. Record the producer, ingest service, placement interval, applicable contract/profile, and calibration reference. Use `unverified` or null for unavailable evidence. Never fabricate values.
+7. Record requester, approver, timestamps, reason, and issue/change reference. Activate only after review and separately required contract validation.
+8. Keep retired and corrected records for historical lookup. Never reuse a retired UID or tag.
+
+The source-priority rule remains: the OAA Google Sheet owns inventory facts. The sensor mapping document owns the approved computational cross-reference. Runtime configuration belongs in `src/` or `system/`, not `docs/sensors/`. Do not duplicate the entire procurement inventory into this proposal.
+
+Proposed registration fields include `sensor_uid`, `sensor_tag`, `sensor_label`, `asset_id`, `component_boundary`, `modality`, `source_id`, `source_node_id`, `ingest_node_id`, `observed_property`, `channel`, `profile_doc`, `deployment_id`, `calibration_revision`, `lifecycle_status`, `assigned_by`, `approved_by`, `created_at`, and a change reference. Keep policy version with the registration.
+
+Maintain effective-dated deployment and calibration records. Each stream must resolve to at most one physical sensor at a given time. An approved sensor can have multiple stream rows. Therefore repeated Sensor UIDs across distinct stream rows are allowed, but duplicate sensor registrations are not. Historical deployment rows are also allowed. Reject conflicting active mappings and unexplained overlapping intervals for one stream.
+
+Record lifecycle status separately from the existing contract and validation statuses. Suggested lifecycle values: `proposed`, `active`, `retired`, and `quarantined`. A retired registration does not imply its historical data is invalid.
+
+## 6. Lifecycle decision table
+
+| Event | Sensor UID | Source IDs | Required history or action |
+| --- | --- | --- | --- |
+| Restart same producer | Keep | Keep | New producer epoch before sequence resets. Node ID remains if producer identity is unchanged. |
+| Same sensor unplugged and reconnected | Keep after identity check | Keep if stream meaning is unchanged | Record connection change. New epoch if counters reset. |
+| Move sensor to another room | Keep | Keep | Close prior deployment interval and open a new one. Update label and location metadata. |
+| Move same sensor to a different producer | Keep | Keep | Update effective node assignment and deployment. Allocate a new epoch for the new sequence. |
+| Replace physical sensing unit with same model | New | New | Retire old mappings and record `replaces` relationship. Asset handling follows operations policy. |
+| Replace sensing module on a retained board | New for replaced module only | New for its streams only | Preserve unaffected module IDs. Record component replacement. |
+| Recalibrate same unit | Keep | Keep | New calibration revision with validity interval and evidence. |
+| Firmware/sample-rate change, same measured property and channel | Keep | Keep | New configuration/profile version as appropriate. Revalidate compatibility. New epoch if sequence resets. |
+| Add another channel or measured property | Keep | New for added stream | Register its meaning and profile. Keep existing source IDs. |
+| Repurpose a channel to a different measurement or sensor | Keep only if physical unit is unchanged | New for repurposed stream | Close old mapping. Do not silently change stream meaning. |
+| IP, hostname, port, or USB path changes | Keep after physical verification | Keep | Update connection metadata. Do not infer identity from the address. |
+| Clone a producer configuration for concurrent use | Keep physical identities only if verified | Register actual stream relationships | Give the clone a new node ID and epoch. Block conflicting publication of the same stream. |
+| Lose labels or registration cache | Recover, do not guess | Recover approved mappings | Quarantine uncertain identity until steward review. Never derive a UID from the current port. |
+| Retire or merge duplicate registrations | Never reuse | Retire or alias through reviewed correction | Preserve old references and an audit trail. Do not rewrite historical raw records. |
+
+A stable room function, such as east-wall temperature monitoring, may retain a separate role alias across hardware replacements. The alias resolves to effective-dated deployments. It does not let replacement hardware inherit the old Sensor UID or source ID under this recommendation.
+
+## 7. Frame identity and provenance boundary
+
+The shared envelope remains `source_node_id`, `source_id`, `modality`, `frame_index`, and `payload`. This proposal does not add an approved required envelope field.
+
+The current [edge adapter](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/edge_ingress.py) uses `source_node_id:frame_index` when native frame identity is missing. Two streams on one node can share that value. Restarting a counter also makes node plus index insufficient.
+
+Recommended future frame key: the structured tuple `(source_id, producer_epoch_id, frame_index)`. The source distinguishes streams. The epoch distinguishes counter restarts. Frame index is a non-negative integer unique within a stream's epoch. Resetting or exhausting the index requires a new epoch. Repeated receipt of the same tuple is treated as a duplicate candidate, not a new physical sensor.
+
+If a string representation is needed, serialize the tuple as a compact JSON array with fixed element order, without whitespace, with JSON escaping. Do not concatenate unescaped free-form source IDs. An epoch belongs to the producer sequence and must not be substituted with SAR `run_id`, since a stream can span many runs. Replay preserves the original tuple and records the replay context separately.
+
+Preserve native frame IDs when supplied and record their documented uniqueness scope. A repeated native ID alone is not a globally unique frame key. Keep a generated substitute distinguishable from a source-native value. The existing adapter's use of a generated value in `source_native_id` needs a reviewed compatibility change, not an undocumented rename.
+
+Recommended provenance extension: for each generated or backfilled field, record the field name, origin (`source_native`, `generated`, or `estimated`), reason, generation method/version, generating component, and relevant inputs. Leave a genuinely missing original ID null. A capture time estimated from receipt time and latency must be marked estimated, with its method and inputs. It must not be presented as a device-measured capture time.
+
+These extension names and their transport location require T02/T03/T06 review. The existing `Provenance` class does not yet supply this complete structure. No implementation or runtime validation result is claimed here.
+
+## 8. Illustrative examples
+
+All values below are fictional. Asset IDs are intentionally null because no OAA inventory rows were verified for this proposal. The example uses a proposed registry shape, not a runtime configuration or an approved wire schema.
+
+One inseparable temperature/humidity module has one Sensor UID and two streams:
+
+```json
+{
+  "example_only": true,
+  "sensor_uid": "sar-sensor-8fae1a3c-572b-4b2d-8f14-3dbbdcb78b5e",
+  "sensor_tag": "SAR-SEN-000001",
+  "sensor_label": "Example temperature/humidity module",
+  "asset_id": null,
+  "inventory_verification": "unverified",
+  "component_boundary": "one inseparable temperature/humidity module",
+  "source_node_id": "sar-node-11bd12e1-620f-4f31-aec6-775b96259e20",
+  "ingest_node_id": "sar-ingest-f07a829b-45ba-4a68-a25c-e4b115a630af",
+  "lifecycle_status": "proposed",
+  "streams": [
+    {
+      "source_id": "sar-source-fae5197e-44f8-4f28-8a04-9d913704858d",
+      "observed_property": "temperature",
+      "channel": "temperature",
+      "profile_doc": null
+    },
+    {
+      "source_id": "sar-source-1d77da0c-341d-41d7-928a-5d53e230f16c",
+      "observed_property": "relative_humidity",
+      "channel": "humidity",
+      "profile_doc": null
+    }
+  ]
+}
+```
+
+Null profiles mean these example streams are not approved for contract activation. Actual inventory onboarding still requires approved profiles and validation evidence.
+
+The following generated frame-key examples distinguish both streams and producer restarts:
+
+```json
+[
+  ["mic_a", "sar-epoch-d0acbfb2-b90d-43c8-af17-b5f2443ec164", 0],
+  ["mic_b", "sar-epoch-d0acbfb2-b90d-43c8-af17-b5f2443ec164", 0],
+  ["mic_a", "sar-epoch-30a0e86d-a011-4d39-8ea3-80b82ec54e9a", 0]
+]
+```
+
+The same frame can contribute to more than one overlapping SAR run. Retain its frame key while recording separate run associations and newly emitted object IDs where appropriate. Do not allocate a new sensor or source ID per observation.
+
+## 9. Acceptance cases for later implementation
+
+These are proposed pass/fail cases, not tests executed against an implemented UID system.
+
+| Case | Input or event | Expected result |
+| --- | --- | --- |
+| UID-01 | Register same physical unit twice | Existing registration recovered or duplicate blocked |
+| UID-02 | Register different unit with an existing full UID or tag | Reject duplicate allocation |
+| UID-03 | Register inseparable module with two measured properties | One Sensor UID, two different source IDs |
+| UID-04 | Restart producer and reset index to zero | Sensor/source IDs unchanged, epoch changes, frame keys differ |
+| UID-05 | Two microphones on one node both emit index zero | Different source IDs produce different frame keys |
+| UID-06 | Replace physical sensor with same model | New Sensor UID and new source IDs, old history preserved |
+| UID-07 | Move sensor or change its network address | Sensor/source IDs unchanged, deployment/connection history updated |
+| UID-08 | Recalibrate sensor | IDs unchanged, calibration revision and validity recorded |
+| UID-09 | Supply native frame ID | Preserve value and origin, still assign a separate canonical object ID |
+| UID-10 | Omit native frame ID or capture time | Generated/estimated values explicitly marked with method and inputs |
+| UID-11 | Replay identical source/epoch/index tuple | Identify duplicate candidate and record replay context |
+| UID-12 | Concurrent cloned producers claim same active source mapping | Block conflict pending reviewed multi-producer policy |
+| UID-13 | Submit malformed, truncated, or whitespace-bearing new UID | Reject before activation |
+| UID-14 | Retired UID or tag offered to replacement hardware | Reject reassignment |
+| UID-15 | Unverified asset, unresolved identity, or missing approved profile | Keep proposed/quarantined, do not claim validated onboarding |
+| UID-16 | One stream maps to two physical sensors during overlapping intervals | Reject conflicting active mapping |
+| UID-17 | Add a software-only source | Record source kind and provenance, no fabricated physical sensor |
+| UID-18 | Process the same frame in overlapping run windows | Preserve frame key, record distinct run associations |
+
+## 10. Adoption and review decisions
+
+### 10.1 Decisions requested from Professor Smith
+
+| Decision | Recommended default |
+| --- | --- |
+| Physical scope | One tracked physical sensing unit, with its component boundary recorded |
+| Machine UID format | `sar-sensor-<UUIDv4>` for new registrations |
+| Readable identification | Separate optional registry-issued tag plus changeable label |
+| Stream continuity on replacement | New source IDs, with continuity represented by role/deployment history |
+| Assignment authority | Appointed registry steward, with reviewed contributor requests |
+| Registry extension ownership | Inventory facts stay in OAA, computational mappings stay in SAR |
+| Frame reset boundary | A producer epoch separate from run/session identity |
+| Provenance fields and transport | Review candidate metadata through T02/T03/T06 before schema changes |
+
+### 10.2 Proposed rollout
+
+1. Review this definition set under issue 22 and record approved decisions and policy version.
+2. Add approved definitions to the sensor mapping document. Clarify that its `asset_id` to `source_id` row describes a relationship, not equality or a one-to-one conversion.
+3. Ask the registry steward to verify actual units against the authoritative inventory. Populate a small reviewed pilot, preserving existing source IDs and aliases.
+4. Specify approved metadata/schema extensions through T02 and T03. Address generated-field handling through T06 and audit propagation through T17. Confirm task-to-issue mappings before changing the task register.
+5. Implement and execute relevant acceptance cases through the validator work in T05. Only mark onboarding validated after evidence exists.
+6. Expand registration after pilot review. Preserve old identifiers in historical data and effective-dated aliases. Do not silently rewrite previous observations or archived documents.
+
+Issue 22's research/proposal work is ready for review when the definition set, options, lifecycle rules, examples, and acceptance cases are available. Approval, inventory population, and runtime implementation are separate completion steps. This document does not claim they have occurred.
+
+## 11. Repository references
+
+1. [Sensor inventory and computational mapping](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/sensors/SAR_Sensor_Inventory_and_Computational_Mapping_V1_2026-08-03.md), sections 2.1 and 3 through 7.
+2. [D01.02 shared streaming contract](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02_SAR_Shared_Streaming_Contract_V1_2026-07-29.md), sections 4 and 5.
+3. [D01.02.01 audio profile](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md), profile-specific requirements.
+4. [D01.04 run/session policy](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.04_SAR_Run_and_Session_Identity_and_Boundary_Policy_V1_2026-07-28.md), sections 2 and 5.
+5. [D02.01 class/object model](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D02.01_SAR_Computational_Class_and_Object_Model_V1_2026-07-27.md), section 4.3. Its native-ID wording needs reconciliation with D01.02, not a silent override.
+6. [D04.03 task map](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D04.03_SAR_Computational_Task_Dependency_Test_and_Milestone_Map_V1_2026-08-03.md), T02, T03, T05, T06, and T17.
+7. [Identity/provenance implementation](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/identity.py), current UUIDv4 object-ID generator and provenance fields.
+8. [Edge adapter](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/edge_ingress.py), fallback frame identity.
+9. [L1 acquisition](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/stages/l1_acquisition.py), capture-time backfill and derived-object provenance.
+
+External research references were checked on October 28, 2026. No external inventory values or hardware measurements were verified for this proposal.

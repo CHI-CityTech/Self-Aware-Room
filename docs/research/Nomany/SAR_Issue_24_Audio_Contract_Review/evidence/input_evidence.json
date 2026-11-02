@@ -1,0 +1,46 @@
+{
+  "checked_date": "2026-10-28",
+  "issue": {
+    "url": "https://github.com/CHI-CityTech/Self-Aware-Room/issues/24",
+    "title": "Once Class Diagrams are generated then evaluate the existing Audio Contract to determine whether it meets the requirements of the class definitions",
+    "issue_number": 24,
+    "body": null,
+    "state": "open",
+    "user": {
+      "login": "davidbrucesmith",
+      "name": "davidbrucesmith",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/452385?v=4",
+      "id": 452385
+    },
+    "assignees": [
+      {
+        "login": "nomanytamim-coder",
+        "name": "nomanytamim-coder",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/232478952?v=4",
+        "id": 232478952
+      }
+    ],
+    "labels": null,
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-10-15T16:21:36Z",
+    "updated_at": "2026-10-15T16:21:36Z",
+    "closed_at": null,
+    "display_url": "https://github.com/CHI-CityTech/Self-Aware-Room/issues/24",
+    "display_title": "Once Class Diagrams are generated then evaluate the existing Audio Contract to determine whether it meets the requirements of the class definitions"
+  },
+  "comments": [],
+  "class_reference": {
+    "library_file_id": "libfile_67c808276fe4819183c69afc361ac614",
+    "file_id": "file_00000000ceb481f5a31a79cf1da8baa1",
+    "modified_at": "2026-10-29T00:53:40.320150Z",
+    "bytes": 170536,
+    "sha256": "b18fa52a72872c2ff4d7575545471437f33f5f927bc6a79a1ea5a2a52b3bc6cf",
+    "status": "proposal, approval not established",
+    "local_commit": "4f714beb6244679511ae22d562f03339dc422886",
+    "current_saved_text_verified": true
+  }
+}

@@ -1,0 +1,66 @@
+owner,field,type,classification,source_path,source_line
+DataObject,object_type,ObjectType,common per-instance contract,src/sar_core/contracts/models.py,48
+DataObject,object_id,str,common per-instance contract,src/sar_core/contracts/models.py,49
+DataObject,trace_id,str | None,common per-instance contract,src/sar_core/contracts/models.py,50
+DataObject,quality_status,str | None,common per-instance contract,src/sar_core/contracts/models.py,51
+DataObject,error_status,str | None,common per-instance contract,src/sar_core/contracts/models.py,52
+DataObject,payload,"dict[str, Any]",common per-instance contract,src/sar_core/contracts/models.py,53
+DataObject,provenance,Provenance,common per-instance contract,src/sar_core/contracts/models.py,54
+DataObject,time_context,TimeContext,common per-instance contract,src/sar_core/contracts/models.py,55
+Observation,source_id,str,subtype-specific contract,src/sar_core/contracts/models.py,70
+Event,event_type,str | None,subtype-specific contract,src/sar_core/contracts/models.py,94
+Event,room_entity_id,str | None,subtype-specific contract,src/sar_core/contracts/models.py,95
+Event,observation_ids,list[str],subtype-specific contract,src/sar_core/contracts/models.py,96
+Entity,entity_type,str | None,subtype-specific contract,src/sar_core/contracts/models.py,127
+Entity,room_entity_id,str | None,subtype-specific contract,src/sar_core/contracts/models.py,128
+Entity,is_canonical_room,bool,subtype-specific contract,src/sar_core/contracts/models.py,129
+State,state_scope,str | None,subtype-specific contract,src/sar_core/contracts/models.py,140
+State,room_entity_id,str | None,subtype-specific contract,src/sar_core/contracts/models.py,141
+SemanticState,semantic_label,str | None,subtype-specific contract,src/sar_core/contracts/models.py,152
+Decision,policy_result,str | None,subtype-specific contract,src/sar_core/contracts/models.py,163
+Intent,intent_name,str | None,subtype-specific contract,src/sar_core/contracts/models.py,174
+ExecutionPlan,steps,"list[dict[str, Any]]",subtype-specific contract,src/sar_core/contracts/models.py,185
+Dispatch,channel,str | None,subtype-specific contract,src/sar_core/contracts/models.py,196
+EvaluationRecord,metric_name,str | None,subtype-specific contract,src/sar_core/contracts/models.py,207
+Provenance,parent_object_ids,list[str],composed common metadata,src/sar_core/contracts/identity.py,28
+Provenance,source_native_id,str | None,composed common metadata,src/sar_core/contracts/identity.py,29
+Provenance,created_by_component,str | None,composed common metadata,src/sar_core/contracts/identity.py,30
+Provenance,component_version,str | None,composed common metadata,src/sar_core/contracts/identity.py,31
+Provenance,configuration_version,str | None,composed common metadata,src/sar_core/contracts/identity.py,32
+TimeContext,source_capture_time,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,13
+TimeContext,receipt_time,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,14
+TimeContext,processing_time,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,15
+TimeContext,valid_from,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,16
+TimeContext,valid_until,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,17
+TimeContext,dispatch_time,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,18
+TimeContext,completion_time,datetime | None,composed common metadata,src/sar_core/contracts/timing.py,19
+TimeContext,clock_offset_estimate,float | None,composed common metadata,src/sar_core/contracts/timing.py,20
+TimeContext,clock_quality,str | None,composed common metadata,src/sar_core/contracts/timing.py,21
+TimeContext,sync_source,str | None,composed common metadata,src/sar_core/contracts/timing.py,22
+StageResult,output_objects,list[DataObject],stage result wrapper,src/sar_core/contracts/stages.py,24
+StageResult,status,StageStatus,stage result wrapper,src/sar_core/contracts/stages.py,25
+StageResult,messages,list[str],stage result wrapper,src/sar_core/contracts/stages.py,26
+StageComponent,stage_name,str,"processing component, not DataObject",src/sar_core/contracts/stages.py,42
+StageComponent,telemetry,TelemetryEmitter | None,"processing component, not DataObject",src/sar_core/contracts/stages.py,43
+EdgeObservationFrame,source_node_id,str,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,22
+EdgeObservationFrame,source_id,str,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,23
+EdgeObservationFrame,modality,str,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,24
+EdgeObservationFrame,encoding,str,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,25
+EdgeObservationFrame,sample_rate_hz,int,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,26
+EdgeObservationFrame,channel_count,int,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,27
+EdgeObservationFrame,frame_index,int,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,28
+EdgeObservationFrame,payload,"dict[str, Any]","edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,29
+EdgeObservationFrame,source_capture_time,datetime | None,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,30
+EdgeObservationFrame,source_frame_id,str | None,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,31
+EdgeObservationFrame,source_latency_ms,float | None,"edge transport, not DataObject base",src/sar_core/contracts/edge_ingress.py,32
+LogRecord,stage_name,str,"operational telemetry, not DataObject",src/sar_core/contracts/observability.py,26
+LogRecord,record_type,str,"operational telemetry, not DataObject",src/sar_core/contracts/observability.py,27
+LogRecord,message,str,"operational telemetry, not DataObject",src/sar_core/contracts/observability.py,28
+LogRecord,level,LogLevel,"operational telemetry, not DataObject",src/sar_core/contracts/observability.py,29
+LogRecord,timestamp_utc,datetime,"operational telemetry, not DataObject",src/sar_core/contracts/observability.py,30
+LogRecord,trace_id,str | None,"operational telemetry, not DataObject",src/sar_core/contracts/observability.py,31
+LogRecord,payload,"dict[str, Any]","operational telemetry, not DataObject",src/sar_core/contracts/observability.py,32
+RawReference,raw_ref_uri,str,raw evidence reference value object,src/sar_core/storage/raw_store.py,19
+RawReference,checksum_sha256,str,raw evidence reference value object,src/sar_core/storage/raw_store.py,20
+RawReference,media_type,str,raw evidence reference value object,src/sar_core/storage/raw_store.py,21
+RawReference,byte_size,int,raw evidence reference value object,src/sar_core/storage/raw_store.py,22

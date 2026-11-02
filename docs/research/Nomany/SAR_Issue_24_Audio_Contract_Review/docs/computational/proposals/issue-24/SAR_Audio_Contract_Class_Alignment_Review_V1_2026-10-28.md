@@ -1,0 +1,232 @@
+# SAR Audio Contract and Class Alignment Review
+
+Status: Provisional assessment for Professor Smith, not an approval or implemented correction
+
+Version: 1. Assessment date: 2026-10-28
+
+Prepared for: Kazi Tamim Nomany, with AI assistance
+
+Issue: [SAR #24](https://github.com/CHI-CityTech/Self-Aware-Room/issues/24)
+
+Related documents: D01.02, D01.02.01, D01.04, and D02.01. No new canonical Doc-ID is allocated.
+
+Repository baseline: `8c99abecd723a39370455ba9e27adca2cea872b1`
+
+Class-design reference: Issue 23 proposal and five UML views dated October 28, 2026, local commit `4f714beb6244679511ae22d562f03339dc422886`. Its saved report was reread for this assessment. The reference is marked proposed, not approved. The handoff includes that review snapshot.
+
+## 1. Answer to issue 24
+
+The audio contract partly meets the proposed class definitions. Its structure is compatible: audio extends a shared frame contract, L1 emits Observation objects, common identity/timing/provenance remain shared, and audio details belong in profile metadata. A separate AudioObservation inheritance hierarchy is not required.
+
+Full alignment is not established. The written profile needs a precise frame-to-class mapping, field authority and reference-resolution rules, and clearer conditional validation. The baseline code also accepts audio that lacks explicitly required precision information. The storage branch removes direct precision and gating metadata from emitted payloads, although the original metadata remains in the stored JSON artifact.
+
+| Assessment level | Conclusion |
+| --- | --- |
+| Written profile versus proposed class structure | Compatible in principle, with the clarifications below required before acceptance |
+| Baseline runtime versus written audio requirements | Full conformance is not demonstrated, with concrete counterexamples |
+| Formal acceptance against issue 23 definitions | Provisional, because class-design approval has not been established in the supplied evidence |
+
+This review does not reject the audio design as a whole or replace the profile. It identifies the changes and evidence needed for a reviewed acceptance decision.
+
+## 2. Scope and comparison rules
+
+The active audio target is D01.02.01, not the older combined contract in the archive. D01.02 supplies shared frame, identity, timing, and provenance requirements. D02.01 and the issue 23 draft supply the class boundaries. D01.04 supplies run/session requirements.
+
+Separate the source transport frame from the internal SAR object. A source does not need to emit all eight DataObject fields. L1 owns canonical SAR identity and ingest timestamps. Observation inherits common fields. Its payload can carry audio metadata or references. Decision, Intent, ExecutionPlan, and Dispatch fields belong to later stages and are not missing audio-ingest requirements.
+
+Normative wording matters. A MUST is treated as a requirement when its conditions apply. A SHOULD is a recommendation. A MAY is permission, not a feature every implementation must enable. Proposed numeric ranges, metadata-isolation choices, and new context fields are labeled as recommendations rather than invented existing requirements.
+
+Thirteen fresh synthetic probes were run for this assessment. Earlier October 6 results were not simply relabeled. No physical microphone, live room, gate processor, ring buffer, deletion engine, or phrase recognizer was tested. StageStatus.OK reports scaffold behavior and is not a conformance certificate.
+
+## 3. Frame-to-class mapping
+
+This table evaluates the class location of existing or required information. Some rows describe shared contract/class concerns rather than fields that every source frame must supply.
+
+| ID | Field or group | Class destination | Current observation | Evidence |
+| --- | --- | --- | --- | --- |
+| C01 | `object_type` | Observation / inherited DataObject | Set to observation by constructor | P01 |
+| C02 | `object_id` | DataObject.object_id | New derived ID and parent linkage work on tested path | P01, P08 |
+| C03 | `trace_id` | DataObject.trace_id | L1 preserves supplied value; distinct from run/session | Source inspection |
+| C04 | `quality_status` | DataObject.quality_status | L1 preserves or supplies captured; allowed vocabulary needs review | Source inspection |
+| C05 | `error_status` | DataObject.error_status | Carried through; not proof failed audio validation occurs | P02 |
+| C06 | `payload` | DataObject.payload | Inline data or reference descriptor supported; reference metadata placement incomplete | P01, P04 |
+| C07 | `provenance` | DataObject.provenance / Provenance | Native and parent identity preserved; generated-field origins missing | P08, P09, P10 |
+| C08 | `time_context` | DataObject.time_context / TimeContext | Receipt and processing stamped; estimated origin not marked; L2 aliases instance | P01, P10, P12 |
+| C09 | `source_id` | Observation.source_id | Mapped from edge frame to Observation | P01 |
+| C10 | `source_node_id` | Observation.payload | Mapped, but conflicting payload can override outer field | P07 |
+| C11 | `modality` | Observation.payload | Mapped, but conflicting payload can override outer audio declaration | P07 |
+| C12 | `frame_index` | Observation.payload | Copied; descending and negative values accepted | P06, P13 |
+| C13 | `encoding` | Observation.payload | Copied and retained with references; conflicting declarations unresolved | P04, P07 |
+| C14 | `sample_rate_hz` | Observation.payload | Required by constructor; zero accepted without validation | P13 |
+| C15 | `channel_count` | Observation.payload | Required by constructor; zero accepted without validation | P13 |
+| C16 | `sample_format / bit_depth` | Observation.payload or reviewed resolvable metadata | Absent values accepted; reference branch removes direct metadata | P02, P04 |
+| C17 | `source_frame_id` | Provenance.source_native_id and frame identity metadata | Native value preserved; fallback lacks stream/reset scope and origin label | P08, P09 |
+| C18 | `source_capture_time / source_latency_ms` | TimeContext.source_capture_time and payload latency | Backfill exists, but estimated origin and authority rules need clarification | P10 |
+| C19 | `raw_ref_uri / checksum_sha256 / media_type / byte_size` | Observation.payload / RawReference | Synthetic stored JSON reference, digest, and size verified | P04 |
+| C20 | `seven conditional gating fields` | Observation.payload or segment metadata | Incomplete set accepted under enabled-gating test context; removed from direct reference payload | P04, P05 |
+| C21 | `capture_policy / retention audit markers` | Payload and reviewed observability records | Contract states policy; full/hybrid/selective behavior not demonstrated | Not executed |
+| C22 | `segment bounds and source-frame links` | Derived object provenance plus reviewed segment payload schema | Generic parent links exist; phrase/segment-specific schema and behavior unassessed | Not executed |
+| C23 | `run_id / session_id` | Proposed associated ExecutionContext or equivalent | Absent from tested L1 object and four O1 records; class extension still proposed | P11 |
+| C24 | `component/version/configuration fields` | Provenance and operational telemetry | L1 populates component/version/configuration; preserve this separation | Source inspection |
+
+Download the [complete mapping CSV](../../../assets/issue24/audio_class_mapping.csv). The eight common fields are the existing DataObject fields. Runtime context remains separate from source identity. Sensor UID and procurement asset IDs remain registry relationships and should not be made universal per-frame class fields by this assessment.
+
+## 4. Findings and recommended priority
+
+| ID | Priority | Finding category | Finding | Evidence |
+| --- | --- | --- | --- | --- |
+| A01 | Medium | Contract clarification | Add an explicit frame-to-Observation mapping | P01 |
+| A02 | High | Runtime gap and schema clarification | Enforce precision information and define value constraints | P02, P13 |
+| A03 | High | Contract-to-runtime mapping gap | Specify compact metadata preservation on raw references | P04 |
+| A04 | High | Contract clarification and adapter gap | Reject conflicting frame and payload declarations | P07 |
+| A05 | Medium | Conditional contract clarification and enforcement gap | Make gating activation and threshold units explicit | P05 |
+| A06 | High | Ordering gap and boundary clarification | Define and enforce stream/session ordering and resets | P06 |
+| A07 | High | Shared identity/provenance gap | Clarify generated versus native frame identity | P08, P09, P10 |
+| A08 | Medium | Cross-contract dependency | Resolve run/session propagation without assuming a new field exists | P11 |
+| A09 | Medium | Evidence not assessed | Require retention, discard, and segment evidence before acceptance | Not executed |
+| A10 | Low | Provisional class-policy decision | Review mutable metadata ownership separately | P12 |
+
+Download the [findings CSV](../../../assets/issue24/audio_review_findings.csv) for source locations and proposed follow-up.
+
+### A01. Make the boundary mapping explicit
+
+The profile already states that it extends D01.02. That supports the issue 23 composition design. Add a mapping appendix rather than copying all class definitions into the profile. Explain what comes from the source, what L1 generates, and which metadata travels directly with an Observation.
+
+Source: [audio contract position](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L15), [shared ingest authority](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02_SAR_Shared_Streaming_Contract_V1_2026-07-29.md#L64), and [common object model](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/models.py#L37).
+
+### A02. Enforce precision and define schema constraints
+
+The audio profile explicitly requires sample_format or bit_depth. P02 supplied neither and still received an OK L1 result. P13 supplied zero sample rate, zero channels, and a negative frame index, which also passed. The latter values motivate explicit type/range rules. The profile does not already specify a complete machine-valid range schema.
+
+The profile also lists sample_format and bit_depth under recommended optional fields. Each can be optional under some combinations, while the pair has a mandatory alternative requirement. A conditional requirements table would make this clearer. Preserve the rule that ambiguous numeric precision requires explicit bit depth.
+
+Source: [required audio fields](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L53), [precision rules](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L75), and [L1 input check](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/stages/l1_acquisition.py#L33).
+
+### A03. Preserve compact metadata when raw audio is referenced
+
+P04 supplied complete precision and gating metadata with raw sample values. With LocalFileRawStore enabled, L1 replaced the payload with a small whitelist plus a reference descriptor. Nine direct fields disappeared: sample_format, bit_depth, gate_state, threshold_on_dbfs, threshold_off_dbfs, pre_roll_ms, post_roll_ms, dropped_by_policy, and capture_policy.
+
+Those values remain in the stored JSON. The stored reference checksum and byte size were verified. Therefore, this is not a finding of permanent data loss. It is a gap in what a downstream consumer can learn without resolving raw storage. The contract should specify which compact metadata must accompany the reference, or require a concrete resolution interface before validation and decoding. No such resolver is demonstrated in the inspected L1/L2 path.
+
+Source: [reference-storage branch](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/stages/l1_acquisition.py#L66) and [frame or payload contract surface](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L53).
+
+### A04. Resolve conflicts between frame and payload fields
+
+P07 used outer modality audio and encoding pcm16, but put modality video and encoding opus in the payload. The adapter emitted the payload values because its dictionary expansion allows them to override outer metadata. The source-node value was also overridden. The written contract permits frame or payload placement without specifying this precedence.
+
+Recommended clarification: specify one authoritative representation and reject conflicting duplicate declarations. This is proposed policy, not a claim that the existing profile already defines a conflict-handling algorithm.
+
+Source: [adapter dictionary merge](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/edge_ingress.py#L35).
+
+### A05. Clarify conditional gating and threshold units
+
+Gating fields become mandatory only when the relevant policy is enabled. The validator needs that policy context or a versioned configuration reference. P05 used an enabled-gating interpretation in the test driver and supplied incomplete gate metadata, which passed through L1. This does not claim that an implemented gating feature was switched on.
+
+Distinguish absolute threshold_on_dbfs/threshold_off_dbfs values from threshold_on_offset_db/threshold_off_offset_db offsets. Record the noise-floor estimate and policy/configuration version used to derive thresholds. The profile's tentative 500/800 ms and offset examples must remain tentative, not universal acceptance thresholds. Define Boolean, enum, finite-number, and non-negative duration rules through schema review.
+
+Source: [conditional gating rules](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L94) and [threshold examples and tentative defaults](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L127).
+
+### A06. Specify ordering and reset scope
+
+The profile requires monotonic indices within a source stream/session. P06 processed indices 2 then 1 for one source in one assumed source-session fixture, without rejection. Define whether monotonic means strictly increasing, how duplicates and replay are recognized, and what happens after producer restarts or counter resets.
+
+Do not silently equate a source sequence session with a SAR processing session or run. The producer-epoch concept in issue 22 remains a proposal and cannot be treated as an approved new required field here.
+
+Source: [audio frame definition](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L28).
+
+### A07. Preserve native and generated identity distinctions
+
+P08 confirmed native identity preservation, a new derived object ID, and parent linkage. P09 reproduced equal generated frame labels for different streams on one node. Canonical SAR object IDs remained distinct. P10 confirmed that capture time is filled when missing, but the provenance type has no explicit per-field generated/estimated origin markers.
+
+Keep the separate canonical object identity required by D01.02, reconcile D02.01's native-ID wording, and approve the representation of generated/backfilled fields. This review does not change the UUID generator or assign sensor IDs.
+
+Source: [shared provenance requirements](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02_SAR_Shared_Streaming_Contract_V1_2026-07-29.md#L64), [fallback identity](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/edge_ingress.py#L35), and [capture-time backfill](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/stages/l1_acquisition.py#L59).
+
+### A08. Resolve run/session context as a cross-contract dependency
+
+P11 found no run_id or session_id in the tested L1 object or its four emitted O1 records. The current object, timing, and logging types do not declare those fields. An external wrapper is a possible design, but it must be specified and demonstrated. The issue 23 ExecutionContext is not an implemented field or accepted contract yet.
+
+This is a D01.04 propagation dependency, not a reason to force a microphone to allocate SAR run IDs.
+
+### A09. Leave untested conditional behaviors unassessed
+
+No deletion/retention workflow, live gating signal processing, rolling buffer, or multi-frame phrase derivation was exercised. Retention switches are recommended, while several storage/segment behaviors are permitted or conditional. Their absence from this probe suite is not automatically a failed unconditional requirement.
+
+For enabled discard, audit timing and decision markers must survive. For multi-frame segments, preserve frame identity/order and parent linkage. Decide a segment payload/value-object schema through review. A separate top-level Segment object type is not automatically required by the current ten-category model. A single-source derived Observation may be suitable if its schema and bounds are approved. Multi-source evidence requires an appropriate aggregation model.
+
+Source: [room-tone policy](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L116), [retention modes](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L150), and [phrase spanning](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L179).
+
+### A10. Treat metadata ownership as a pending class decision
+
+P12 confirmed that L2 passes the same mutable TimeContext instance to a new Observation. The issue 23 draft recommends isolating mutable metadata. An approved copy/immutability policy is not established in the available evidence, so this is a design decision rather than a demonstrated breach of an accepted immutability rule.
+
+## 5. Assessment against the audio document's checklist
+
+| Check | Existing checklist item | Assessment | Reason | Evidence |
+| --- | --- | --- | --- | --- |
+| AC-01 | Base D01.02 fields | Partly demonstrated | A complete fixture traverses acquisition. Presence/shape alone do not establish semantic conformance. | P01, P03, P13 |
+| AC-02 | Audio required fields | Gap | Missing sample_format and bit_depth are accepted. | P02 |
+| AC-03 | Encoding / sample format / bit depth | Gap | No precision or conflicting-declaration validation demonstrated. | P02, P07 |
+| AC-04 | Shared ingest time and identity | Partial | Positive timestamps/native/object lineage, but fallback scope and generated origins need work. | P01, P08, P09, P10 |
+| AC-05 | Raw retention and traceable references | Partial / policy modes unassessed | Reference digest and size verified. Retention/deletion modes not certified. | P04; modes not executed |
+| AC-06 | Room-tone discard if enabled | Not assessed | No ring buffer or signal-level gating experiment. Tentative thresholds are not acceptance limits. | Not executed |
+| AC-07 | Gating/segmentation metadata if enabled | Conditional enforcement gap | Incomplete metadata passes under the driver enabled-gating assumption. No runtime gating feature was activated. | P04, P05 |
+| AC-08 | Segment/frame provenance if segments produced | Not assessed | No multi-frame segment fixture or ASR workflow. Generic parent links are insufficient proof. | Not executed |
+
+The eight checklist items correspond to D01.02.01 section 7 in their existing order. Download the [checklist CSV](../../../assets/issue24/audio_conformance_checklist.csv). Not assessed is different from failed. Conditional results apply only under their stated policy assumptions.
+
+## 6. Fresh probe evidence
+
+| Probe | Exercise | Interpretation |
+| --- | --- | --- |
+| P01 | Complete inline audio follows structural acquisition path | Positive structural evidence only. Does not establish full audio conformance. |
+| P02 | Missing required audio precision information accepted | L1 does not enforce the explicit sample_format-or-bit_depth requirement in D01.02.01 section 4. |
+| P03 | Five-field non-audio envelope cannot be constructed | The current transport constructor forces audio-related fields onto the generalized envelope. This is not a full environmental-profile test. |
+| P04 | Reference-storage path removes direct precision and gating metadata | Metadata is not destroyed, but downstream consumers must resolve storage to recover it. The contract needs an explicit direct-metadata/reference-resolution rule. |
+| P05 | Incomplete gating metadata accepted under enabled-gating interpretation | No conditional profile validation is performed. The driver assumes enabled gating. It does not claim to have enabled an implemented runtime gating feature. |
+| P06 | Descending frame indices accepted for one source in one fixture sequence | This acquisition path does not enforce monotonic ordering. Stream/session/reset semantics still need an agreed validator boundary. |
+| P07 | Payload entries override conflicting outer frame metadata | The adapter merge has precedence behavior that the written contract does not specify. Recommend rejecting conflicting declarations. |
+| P08 | Native identity and canonical object identity remain separate | Positive identity/lineage evidence on this path. |
+| P09 | Generated fallback frame labels collide across two streams | The fallback ignores source_id. Canonical SAR object IDs did not collide. |
+| P10 | Estimated capture time has no explicit field-origin marker | The scaffold fills missing values but its current provenance type lacks explicit generated/estimated-field markers required by the shared adapter policy. |
+| P11 | Run/session identifiers absent from these emitted records | These scaffold outputs do not demonstrate D01.04 run/session propagation. No proposed ExecutionContext has been implemented. |
+| P12 | L2 reuses the incoming mutable TimeContext instance | Relevant to issue 23 proposed metadata-isolation policy. This is not by itself a violation of a currently agreed immutability requirement. |
+| P13 | Numerically implausible audio dimensions accepted | Presence-only wording needs explicit type/range rules and implementation checks. Proposed range validation is not an already executed approved schema test. |
+
+The submission package includes probe_results.json, the probe driver, and the stored synthetic reference fixture. No production source was patched for these exercises. Checksums and file sizes refer to the synthetic artifact, not real audio captures.
+
+## 7. Proposed clarification text for a later reviewed revision
+
+The following wording is a proposal, not an active amendment:
+
+1. Audio transport frames conform to D01.02 plus this profile. Audio requirements do not become universal fields on DataObject. L1 emits Observation with the shared object identity, timing, quality/error, and provenance structure.
+2. The approved field-mapping appendix defines where each source, ingest, and audio metadata value lives. Duplicate frame/payload declarations must agree or the adapter rejects the input.
+3. Audio metadata must provide enough information to interpret sample rate, channel layout, and numeric precision. At least sample_format or bit_depth is supplied, with explicit bit depth where numeric precision remains ambiguous. Exact type/range and enum rules are schema-versioned.
+4. Reference-based payloads keep the compact metadata required for validation/interpretation directly available, or use a specified resolver before downstream processing. A URI, checksum, and byte size alone do not prove decoding metadata is available.
+5. Gating and discard conditions are determined from explicit policy context. Validate the required conditional fields for that context. Distinguish measured absolute thresholds from configured noise-floor offsets.
+6. Source-frame ordering, duplicates, reset boundaries, and replay are defined independently of SAR run windows. Native IDs are preserved. Generated IDs and estimated timestamps carry reviewed origin metadata.
+7. Enabled retention/discard and segment derivation retain the required audit and lineage evidence. Segment derivation does not rewrite original frame identity or order.
+
+An implementation must fail validation before normal observation emission when an applicable MUST is unsatisfied. Exact error/degraded behavior and the validation result interface require review, rather than being introduced by this assessment.
+
+## 8. Acceptance work and decisions
+
+Professor Smith should confirm the issue 23 class baseline, the mapping appendix, metadata authority/reference behavior, source ordering/reset scope, and conditional policy context. Then select which runtime changes to implement.
+
+Suggested follow-up: T02/T04 for envelope/object mapping, T03/T06 for identity and generated-field propagation, T05/T07 for shared and audio validators, T12 for profile compatibility, and T17 for audit/run-context propagation. These are proposed relationships, not changed task-to-issue assignments.
+
+Before claiming conformance, run positive and negative fixtures for complete inline audio, complete referenced audio, missing precision fields, ambiguous precision, invalid dimensions, conflicting declarations, duplicate/out-of-order frames, and restarts. Test gating enabled and disabled separately. For each enabled retention/discard/segment feature, supply its own audit and boundary evidence. Numeric defaults need live validation before becoming acceptance thresholds.
+
+Approve the assessment first, implement selected corrections on a separate branch, and attach the resulting test evidence before closing implementation gaps. Issue 24's evaluation is available for review. Runtime fixes, hardware validation, and canonical contract approval are not claimed complete.
+
+## 9. References and preservation
+
+- [D01.02.01 Audio Streaming Profile](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02.01_SAR_Audio_Streaming_Profile_V1_2026-07-29.md#L1), the existing draft audio contract.
+- [D01.02 Shared Streaming Contract](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.02_SAR_Shared_Streaming_Contract_V1_2026-07-29.md#L1), especially sections 4 through 7.
+- [D02.01 Class and Object Model](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D02.01_SAR_Computational_Class_and_Object_Model_V1_2026-07-27.md#L1).
+- [D01.04 Run and Session Policy](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/docs/computational/D01.04_SAR_Run_and_Session_Identity_and_Boundary_Policy_V1_2026-07-28.md#L1).
+- [Issue 23](https://github.com/CHI-CityTech/Self-Aware-Room/issues/23), with the reread class-proposal snapshot included in the handoff.
+- [models.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/models.py#L1), [edge_ingress.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/edge_ingress.py#L1), [l1_acquisition.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/stages/l1_acquisition.py#L1), [l2_normalization.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/stages/l2_normalization.py#L1).
+- [identity.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/identity.py#L1), [timing.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/timing.py#L1), [observability.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/contracts/observability.py#L1), [raw_store.py](https://github.com/CHI-CityTech/Self-Aware-Room/blob/8c99abecd723a39370455ba9e27adca2cea872b1/src/sar_core/storage/raw_store.py#L1).
+
+The original profile, shared contract requirements, Doc-IDs, archived history, runtime code, task statuses, and real inventory values are preserved. The accompanying repository changes add this assessment and review links only. GitHub approval/submission state is not inferred from local file creation.

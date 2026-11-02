@@ -1,0 +1,21 @@
+digraph SAR {
+graph [rankdir=TB, bgcolor="white", pad="0.25", nodesep="0.28", ranksep="0.65", fontname="Helvetica", fontsize=18, labelloc=t, label="05 Modality extension by validation and adaptation | proposed, not implemented"];
+node [shape=plain, fontname="Helvetica", fontsize=11];
+edge [fontname="Helvetica", fontsize=10, color="#334155", arrowsize=0.8];
+"EdgeFrame" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed generalized DTO&gt;&gt;<BR/>EdgeFrame</B></TD></TR><TR><TD ALIGN="LEFT">+ source_node_id: str<BR ALIGN="LEFT"/>+ source_id: str<BR ALIGN="LEFT"/>+ modality: str<BR ALIGN="LEFT"/>+ frame_index: int<BR ALIGN="LEFT"/>+ payload: dict<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"IngressAdapter" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed Protocol&gt;&gt;<BR/>IngressAdapter</B></TD></TR><TR><TD ALIGN="LEFT">+ adapt(frame: EdgeFrame): Observation<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"ContractValidator" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed Protocol&gt;&gt;<BR/>ContractValidator</B></TD></TR><TR><TD ALIGN="LEFT">+ validate(frame: EdgeFrame): ValidationResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"FrameValidator" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed implementation&gt;&gt;<BR/>FrameValidator</B></TD></TR><TR><TD ALIGN="LEFT">+ shared_validator<BR ALIGN="LEFT"/>+ profile_registry<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ validate(frame): ValidationResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"SharedEnvelopeValidator" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed implementation&gt;&gt;<BR/>SharedEnvelopeValidator</B></TD></TR><TR><TD ALIGN="LEFT">+ validate(frame): ValidationResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"ProfileValidator" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed Protocol&gt;&gt;<BR/>ProfileValidator</B></TD></TR><TR><TD ALIGN="LEFT">+ validate(frame: EdgeFrame): ValidationResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"AudioProfileValidator" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed implementation&gt;&gt;<BR/>AudioProfileValidator</B></TD></TR><TR><TD ALIGN="LEFT">+ validate(frame): ValidationResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"Observation" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing object subtype&gt;&gt;<BR/>Observation</B></TD></TR><TR><TD ALIGN="LEFT">+ source_id: str<BR ALIGN="LEFT"/>+ inherited DataObject fields<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+FrameValidator -> ContractValidator [style=dashed, arrowhead=empty];
+FrameValidator -> SharedEnvelopeValidator [arrowhead=vee, label="shared checks"];
+FrameValidator -> ProfileValidator [arrowhead=vee, headlabel="0..*", label="registered profiles"];
+AudioProfileValidator -> ProfileValidator [style=dashed, arrowhead=empty];
+IngressAdapter -> EdgeFrame [style=dashed, arrowhead=vee, label="consumes"];
+IngressAdapter -> ContractValidator [arrowhead=vee, label="validates before emission"];
+IngressAdapter -> Observation [style=dashed, arrowhead=vee, label="produces"];
+{ rank=same; SharedEnvelopeValidator; ProfileValidator; }
+}

@@ -1,0 +1,21 @@
+digraph SAR {
+graph [rankdir=TB, bgcolor="white", pad="0.25", nodesep="0.28", ranksep="0.65", fontname="Helvetica", fontsize=18, labelloc=t, label="04 Processing components and capability interfaces | proposed boundaries"];
+node [shape=plain, fontname="Helvetica", fontsize=11];
+edge [fontname="Helvetica", fontsize=10, color="#334155", arrowsize=0.8];
+"Stage" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;proposed Protocol&gt;&gt;<BR/>Stage</B></TD></TR><TR><TD ALIGN="LEFT">+ accept_input(objects): bool<BR ALIGN="LEFT"/>+ process(objects): StageResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"StageComponent" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing ABC&gt;&gt;<BR/>StageComponent</B></TD></TR><TR><TD ALIGN="LEFT">+ stage_name: str<BR ALIGN="LEFT"/>+ telemetry: TelemetryEmitter or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ accept_input(objects): bool {abstract}<BR ALIGN="LEFT"/>+ process(objects): StageResult {abstract}<BR ALIGN="LEFT"/># _emit_received / transformed / sent()<BR ALIGN="LEFT"/># _emit_error / indeterminate()<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"L1AcquisitionStage" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing representative stage&gt;&gt;<BR/>L1AcquisitionStage</B></TD></TR><TR><TD ALIGN="LEFT">+ ingest_node_id: str<BR ALIGN="LEFT"/>+ raw_store: RawStore or None<BR ALIGN="LEFT"/>+ default_source_latency_ms: float<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"TelemetryEmitter" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing Protocol&gt;&gt;<BR/>TelemetryEmitter</B></TD></TR><TR><TD ALIGN="LEFT">+ emit_status(stage, status, message): None<BR ALIGN="LEFT"/>+ emit_trace(stage, in_count, out_count): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"O1ObservabilityComponent" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing implementation&gt;&gt;<BR/>O1ObservabilityComponent</B></TD></TR><TR><TD ALIGN="LEFT">+ records: list[LogRecord]<BR ALIGN="LEFT"/>+ sinks: list[LogSink]<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ emit_status(...)<BR ALIGN="LEFT"/>+ emit_trace(...)<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"RawStore" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing Protocol&gt;&gt;<BR/>RawStore</B></TD></TR><TR><TD ALIGN="LEFT">+ store_payload(source_id, payload): RawReference<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"LogSink" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing Protocol&gt;&gt;<BR/>LogSink</B></TD></TR><TR><TD ALIGN="LEFT">+ emit(record: LogRecord): None<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+"SarPipeline" [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7"><TR><TD BGCOLOR="#edf2f7"><B>&lt;&lt;existing assembly, typing proposed&gt;&gt;<BR/>SarPipeline</B></TD></TR><TR><TD ALIGN="LEFT">+ l1 through l5b: Stage<BR ALIGN="LEFT"/>+ o1: observer or None<BR ALIGN="LEFT"/></TD></TR><TR><TD ALIGN="LEFT">+ run(seed): PipelineRunResult<BR ALIGN="LEFT"/></TD></TR></TABLE>>];
+StageComponent -> Stage [style=dashed, arrowhead=empty, label="structurally satisfies"];
+L1AcquisitionStage -> StageComponent [arrowhead=empty];
+StageComponent -> TelemetryEmitter [arrowhead=vee, headlabel="0..1", label="telemetry reference"];
+O1ObservabilityComponent -> TelemetryEmitter [style=dashed, arrowhead=empty];
+O1ObservabilityComponent -> LogSink [arrowhead=vee, headlabel="0..*", label="sinks"];
+L1AcquisitionStage -> RawStore [arrowhead=vee, headlabel="0..1", label="storage reference"];
+SarPipeline -> Stage [arrowhead=vee, headlabel="7", label="configured stage slots"];
+{ rank=same; Stage; TelemetryEmitter; RawStore; }
+}

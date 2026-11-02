@@ -1,0 +1,25 @@
+mapping_id,field_or_group,class_target,role,baseline_observation,evidence
+C01,object_type,Observation / inherited DataObject,"Derived category, not an audio L0 field",Set to observation by constructor,P01
+C02,object_id,DataObject.object_id,Canonical emitted-object identity,New derived ID and parent linkage work on tested path,"P01, P08"
+C03,trace_id,DataObject.trace_id,Optional processing correlation,L1 preserves supplied value; distinct from run/session,Source inspection
+C04,quality_status,DataObject.quality_status,Common object quality,L1 preserves or supplies captured; allowed vocabulary needs review,Source inspection
+C05,error_status,DataObject.error_status,Common object error,Carried through; not proof failed audio validation occurs,P02
+C06,payload,DataObject.payload,"Shared container, audio-specific content",Inline data or reference descriptor supported; reference metadata placement incomplete,"P01, P04"
+C07,provenance,DataObject.provenance / Provenance,Composed parent/source/creator metadata,Native and parent identity preserved; generated-field origins missing,"P08, P09, P10"
+C08,time_context,DataObject.time_context / TimeContext,Composed capture/ingest/validity metadata,Receipt and processing stamped; estimated origin not marked; L2 aliases instance,"P01, P10, P12"
+C09,source_id,Observation.source_id,"Stream-specific field, not universal base field",Mapped from edge frame to Observation,P01
+C10,source_node_id,Observation.payload,Transport producer identity,"Mapped, but conflicting payload can override outer field",P07
+C11,modality,Observation.payload,Profile selector,"Mapped, but conflicting payload can override outer audio declaration",P07
+C12,frame_index,Observation.payload,Ordered source-frame position,Copied; descending and negative values accepted,"P06, P13"
+C13,encoding,Observation.payload,Audio profile metadata,Copied and retained with references; conflicting declarations unresolved,"P04, P07"
+C14,sample_rate_hz,Observation.payload,Audio profile metadata,Required by constructor; zero accepted without validation,P13
+C15,channel_count,Observation.payload,Audio profile metadata,Required by constructor; zero accepted without validation,P13
+C16,sample_format / bit_depth,Observation.payload or reviewed resolvable metadata,Conditional audio precision information,Absent values accepted; reference branch removes direct metadata,"P02, P04"
+C17,source_frame_id,Provenance.source_native_id and frame identity metadata,Native ID distinct from object ID,Native value preserved; fallback lacks stream/reset scope and origin label,"P08, P09"
+C18,source_capture_time / source_latency_ms,TimeContext.source_capture_time and payload latency,Capture-time/backfill inputs,"Backfill exists, but estimated origin and authority rules need clarification",P10
+C19,raw_ref_uri / checksum_sha256 / media_type / byte_size,Observation.payload / RawReference,Compact raw evidence descriptor,"Synthetic stored JSON reference, digest, and size verified",P04
+C20,seven conditional gating fields,Observation.payload or segment metadata,Required only when gating/segmentation enabled,Incomplete set accepted under enabled-gating test context; removed from direct reference payload,"P04, P05"
+C21,capture_policy / retention audit markers,Payload and reviewed observability records,Storage policy and audit,Contract states policy; full/hybrid/selective behavior not demonstrated,Not executed
+C22,segment bounds and source-frame links,Derived object provenance plus reviewed segment payload schema,Conditional frame-to-segment relationship,Generic parent links exist; phrase/segment-specific schema and behavior unassessed,Not executed
+C23,run_id / session_id,Proposed associated ExecutionContext or equivalent,"D01.04 processing context, not source identity",Absent from tested L1 object and four O1 records; class extension still proposed,P11
+C24,component/version/configuration fields,Provenance and operational telemetry,"Creator metadata, not microphone properties",L1 populates component/version/configuration; preserve this separation,Source inspection

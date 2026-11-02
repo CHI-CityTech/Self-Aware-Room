@@ -1,0 +1,27 @@
+{
+  "issue_url": "https://github.com/CHI-CityTech/Self-Aware-Room/issues/22",
+  "issue_title": "research and propose a meaningful UID system definition set.",
+  "issue_assignee": "nomanytamim-coder",
+  "checked_date": "2026-10-28",
+  "baseline_commit": "8c99abecd723a39370455ba9e27adca2cea872b1",
+  "local_commit": "bc77c37419eaa19d8bcf3fdab4db8e7d4b11e1b1",
+  "local_branch": "tamim/issue-22-sensor-uid",
+  "remote_write_access": false,
+  "remote_changes_made": false,
+  "source_documents_changed": [
+    "docs/sensors/README.md",
+    "docs/sensors/SAR_Sensor_Inventory_and_Computational_Mapping_V1_2026-08-03.md",
+    "docs/sensors/SAR_Sensor_UID_Definition_Set_Proposal_V1_2026-10-28.md"
+  ],
+  "research_sources": [
+    "https://www.rfc-editor.org/rfc/rfc9562.html",
+    "https://www.w3.org/TR/2017/REC-vocab-ssn-20171019/",
+    "https://www.w3.org/TR/2013/REC-prov-dm-20130430/"
+  ],
+  "file_sha256": {
+    "docs/sensors/README.md": "f634dba50aeb2e6e448742ae60d3ad17fa1869f63c1d72af28da5e70dc13c2f7",
+    "docs/sensors/SAR_Sensor_Inventory_and_Computational_Mapping_V1_2026-08-03.md": "c7bac62075bea5a53590e4a44f731f76b9704fbba48d7014a6e871e469d10c34",
+    "docs/sensors/SAR_Sensor_UID_Definition_Set_Proposal_V1_2026-10-28.md": "f843deb969e3633f9fb519e140af11536529c6c4146e3d5d6948ad88051200d8"
+  },
+  "export_note": "PROPOSAL_FOR_REVIEW.md and the standalone deliverable use pinned GitHub links in place of repository-relative links. The docs/ files preserve repository-relative links."
+}
