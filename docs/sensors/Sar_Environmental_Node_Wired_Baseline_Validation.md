@@ -46,4 +46,95 @@ Upon connecting the ESP32 via USB, the Arduino IDE failed to recognize the COM p
 ## 5. Firmware Implementation
 To prevent log flooding, the C++ firmware was engineered with a threshold-based reporting mechanism. The script only transmits data over the serial interface when environmental changes exceed defined deltas (0.5 °C for temperature, 1.0% for humidity, 0.5 hPa for pressure, and 5.0 KOhms for gas resistance).
 
+```cpp
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME680.h>
+
+// Create the sensor object
+Adafruit_BME680 bme; 
+
+// Variables to store the last printed readings
+float lastTemp = -999.0;
+float lastHum = -999.0;
+float lastPres = -999.0;
+float lastGas = -999.0;
+
+// THRESHOLDS: How much a value needs to change before it prints again
+const float tempDiff = 0.5;  // 0.5 degrees Celsius
+const float humDiff = 1.0;   // 1.0 % humidity
+const float presDiff = 0.5;  // 0.5 hPa pressure
+const float gasDiff = 5.0;   // 5.0 KOhms gas resistance
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  Wire.begin(21, 22);
+
+  if (!bme.begin(0x77)) {
+    Serial.println("Could not find a valid BME680 sensor, check wiring!");
+    while (1); 
+  }
+
+  Serial.println("BME680 connected. Waiting for environmental changes...");
+  Serial.println("-----------------------");
+
+  bme.setTemperatureOversampling(BME680_OS_8X);
+  bme.setHumidityOversampling(BME680_OS_2X);
+  bme.setPressureOversampling(BME680_OS_4X);
+  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme.setGasHeater(320, 150); 
+}
+
+void loop() {
+  if (!bme.performReading()) {
+    Serial.println("Failed to perform reading.");
+    delay(2000);
+    return;
+  }
+
+  // Grab the current readings
+  float currentTemp = bme.temperature;
+  float currentHum = bme.humidity;
+  float currentPres = bme.pressure / 100.0;
+  float currentGas = bme.gas_resistance / 1000.0;
+
+  // Check if any reading has shifted past our defined thresholds
+  bool changed = false;
+  if (abs(currentTemp - lastTemp) >= tempDiff) changed = true;
+  if (abs(currentHum - lastHum) >= humDiff) changed = true;
+  if (abs(currentPres - lastPres) >= presDiff) changed = true;
+  if (abs(currentGas - lastGas) >= gasDiff) changed = true;
+
+  // If a significant change occurred, print it and update the saved states
+  if (changed) {
+    lastTemp = currentTemp;
+    lastHum = currentHum;
+    lastPres = currentPres;
+    lastGas = currentGas;
+
+    Serial.print("Temperature = ");
+    Serial.print(currentTemp);
+    Serial.println(" *C");
+
+    Serial.print("Humidity = ");
+    Serial.print(currentHum);
+    Serial.println(" %");
+
+    Serial.print("Pressure = ");
+    Serial.print(currentPres);
+    Serial.println(" hPa");
+
+    Serial.print("Gas Resistance = ");
+    Serial.print(currentGas);
+    Serial.println(" KOhms");
+
+    Serial.println("-----------------------");
+  }
+
+  delay(2000);
+}
+```
+
 ![Arduino IDE Firmware Script](IMG_6068.jpeg)
