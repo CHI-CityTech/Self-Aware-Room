@@ -1,4 +1,4 @@
-# SAR Environmental Node: Wired Baseline Validation
+# SAR Environmental Node: Stage B Wired Baseline Validation
 
 **Project:** Self-Aware Room (SAR)  
 **Center:** Center for Holistic Integration (CHI), New York City College of Technology  
