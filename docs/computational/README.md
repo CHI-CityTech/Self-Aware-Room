@@ -35,6 +35,10 @@ Profile convention:
 | D04.02 | Setup/Operations | SAR Computational Pipeline Setup Instructions | [Pipeline Setup Instructions](D04.02_SAR_Computational_Pipeline_Setup_Instructions_V1_2026-07-29.md) | V1 / 2026-07-29 | Draft |
 | D04.03 | Planning/Execution | SAR Computational Task, Dependency, Test, and Milestone Map | [Task, Dependency, Test, and Milestone Map](D04.03_SAR_Computational_Task_Dependency_Test_and_Milestone_Map_V1_2026-08-03.md) | V1 / 2026-08-03 | Draft |
 
+## Student Project Planning
+
+The [SAR Computational Internship Project Portfolio](SAR_Computational_Internship_Project_Portfolio.md) translates the layer architecture into candidate student and internship projects. It is a planning catalog, not a technical specification or approval of project scope.
+
 ## Streaming Profile Matrix (D01.02.xx)
 
 This matrix reserves and tracks modality profiles that extend D01.02.
