@@ -19,7 +19,7 @@
  *             Lines starting with '#' are human-readable status messages and
  *             are not frames; the receiver skips them.
  *
- * Receiver:   src/sar_edge/env_node_receiver.py reads these lines, adds a
+ * Receiver:   env_node_receiver.py reads these lines, adds a
  *             timestamp, and saves them on the computer the node is plugged into.
  *
  * Events:     The sensor is sampled every SAMPLE_INTERVAL_MS. A frame is sent
